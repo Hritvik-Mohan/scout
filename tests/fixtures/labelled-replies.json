@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "records": [
+    {
+      "messageId": "reply-001",
+      "receivedAt": "2026-10-01T09:00:00.000Z",
+      "body": "Yes, this is relevant. Please share times.",
+      "expectedClass": "interested"
+    },
+    {
+      "messageId": "reply-002",
+      "receivedAt": "2026-10-01T09:01:00.000Z",
+      "body": "We would like to discuss the project.",
+      "expectedClass": "interested"
+    },
+    {
+      "messageId": "reply-003",
+      "receivedAt": "2026-10-01T09:02:00.000Z",
+      "body": "Can we schedule a call next week?",
+      "expectedClass": "interested"
+    },
+    {
+      "messageId": "reply-004",
+      "receivedAt": "2026-10-01T09:03:00.000Z",
+      "body": "What technologies does the team use?",
+      "expectedClass": "question"
+    },
+    {
+      "messageId": "reply-005",
+      "receivedAt": "2026-10-01T09:04:00.000Z",
+      "body": "How long does an MVP engagement take?",
+      "expectedClass": "question"
+    },
+    {
+      "messageId": "reply-006",
+      "receivedAt": "2026-10-01T09:05:00.000Z",
+      "body": "Can you explain the mentor-led model?",
+      "expectedClass": "question"
+    },
+    {
+      "messageId": "reply-007",
+      "receivedAt": "2026-10-01T09:06:00.000Z",
+      "body": "We already have an internal engineering team.",
+      "expectedClass": "objection"
+    },
+    {
+      "messageId": "reply-008",
+      "receivedAt": "2026-10-01T09:07:00.000Z",
+      "body": "This is outside our current budget.",
+      "expectedClass": "objection"
+    },
+    {
+      "messageId": "reply-009",
+      "receivedAt": "2026-10-01T09:08:00.000Z",
+      "body": "We are not considering external partners.",
+      "expectedClass": "objection"
+    },
+    {
+      "messageId": "reply-010",
+      "receivedAt": "2026-10-01T09:09:00.000Z",
+      "body": "Please check back after the next quarter.",
+      "expectedClass": "not_now"
+    },
+    {
+      "messageId": "reply-011",
+      "receivedAt": "2026-10-01T09:10:00.000Z",
+      "body": "The timing is not right; contact us in January.",
+      "expectedClass": "not_now"
+    },
+    {
+      "messageId": "reply-012",
+      "receivedAt": "2026-10-01T09:11:00.000Z",
+      "body": "We have paused the initiative for now.",
+      "expectedClass": "not_now"
+    },
+    {
+      "messageId": "reply-013",
+      "receivedAt": "2026-10-01T09:12:00.000Z",
+      "body": "Please speak with our product lead instead.",
+      "expectedClass": "referral"
+    },
+    {
+      "messageId": "reply-014",
+      "receivedAt": "2026-10-01T09:13:00.000Z",
+      "body": "I am forwarding this to the engineering owner.",
+      "expectedClass": "referral"
+    },
+    {
+      "messageId": "reply-015",
+      "receivedAt": "2026-10-01T09:14:00.000Z",
+      "body": "The operations director is the right contact.",
+      "expectedClass": "referral"
+    },
+    {
+      "messageId": "reply-016",
+      "receivedAt": "2026-10-01T09:15:00.000Z",
+      "body": "Please unsubscribe me from future emails.",
+      "expectedClass": "unsubscribe"
+    },
+    {
+      "messageId": "reply-017",
+      "receivedAt": "2026-10-01T09:16:00.000Z",
+      "body": "Remove this address from your list.",
+      "expectedClass": "unsubscribe"
+    },
+    {
+      "messageId": "reply-018",
+      "receivedAt": "2026-10-01T09:17:00.000Z",
+      "body": "Do not contact this company again.",
+      "expectedClass": "unsubscribe"
+    },
+    {
+      "messageId": "reply-019",
+      "receivedAt": "2026-10-01T09:18:00.000Z",
+      "body": "I am away until Monday with limited access.",
+      "expectedClass": "out_of_office"
+    },
+    {
+      "messageId": "reply-020",
+      "receivedAt": "2026-10-01T09:19:00.000Z",
+      "body": "Automatic reply: currently on leave.",
+      "expectedClass": "out_of_office"
+    },
+    {
+      "messageId": "reply-021",
+      "receivedAt": "2026-10-01T09:20:00.000Z",
+      "body": "This mailbox is unattended this week.",
+      "expectedClass": "out_of_office"
+    },
+    {
+      "messageId": "reply-022",
+      "receivedAt": "2026-10-01T09:21:00.000Z",
+      "body": "Thanks for reaching out.",
+      "expectedClass": "other"
+    },
+    {
+      "messageId": "reply-023",
+      "receivedAt": "2026-10-01T09:22:00.000Z",
+      "body": "Message received.",
+      "expectedClass": "other"
+    },
+    {
+      "messageId": "reply-024",
+      "receivedAt": "2026-10-01T09:23:00.000Z",
+      "body": "I will review this with the team.",
+      "expectedClass": "other"
+    },
+    {
+      "messageId": "reply-025",
+      "receivedAt": "2026-10-01T09:24:00.000Z",
+      "body": "Interested, please send a short overview.",
+      "expectedClass": "interested"
+    },
+    {
+      "messageId": "reply-026",
+      "receivedAt": "2026-10-01T09:25:00.000Z",
+      "body": "Do you support integrations with existing systems?",
+      "expectedClass": "question"
+    },
+    {
+      "messageId": "reply-027",
+      "receivedAt": "2026-10-01T09:26:00.000Z",
+      "body": "We need a larger vendor with global coverage.",
+      "expectedClass": "objection"
+    },
+    {
+      "messageId": "reply-028",
+      "receivedAt": "2026-10-01T09:27:00.000Z",
+      "body": "Reconnect once our planning cycle begins.",
+      "expectedClass": "not_now"
+    },
+    {
+      "messageId": "reply-029",
+      "receivedAt": "2026-10-01T09:28:00.000Z",
+      "body": "Our technology manager handles these decisions.",
+      "expectedClass": "referral"
+    },
+    {
+      "messageId": "reply-030",
+      "receivedAt": "2026-10-01T09:29:00.000Z",
+      "body": "No further messages, please.",
+      "expectedClass": "unsubscribe"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "records": [
+    {
+      "caseId": "a1-signal-001",
+      "agent": "A1",
+      "inputFixture": "buying-signals.json#signal-001",
+      "expectedSchema": "a1OutputSchema",
+      "snapshot": {
+        "company": "Synthetic Studio 01",
+        "signal": "Funding round"
+      }
+    },
+    {
+      "caseId": "a5-reply-001",
+      "agent": "A5",
+      "inputFixture": "labelled-replies.json#reply-001",
+      "expectedSchema": "a5OutputSchema",
+      "snapshot": { "replyClass": "interested" }
+    },
+    {
+      "caseId": "a7-transcript-001",
+      "agent": "A7",
+      "inputFixture": "historical-transcripts.json#transcript-001",
+      "expectedSchema": "a7OutputSchema",
+      "snapshot": { "package": "Discovery Sprint" }
+    }
+  ]
+}

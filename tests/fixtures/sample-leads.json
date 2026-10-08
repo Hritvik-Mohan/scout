@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "records": [
+    {
+      "leadId": "L-20261007-001",
+      "company": "Synthetic Studio 01",
+      "website": "https://lead01.example.com",
+      "source": "Funding news",
+      "signal": "Funding round",
+      "stage": "New"
+    },
+    {
+      "leadId": "L-20261007-002",
+      "company": "Synthetic Studio 02",
+      "website": "https://lead02.example.com",
+      "source": "Job post",
+      "signal": "Contract dev job post",
+      "stage": "New"
+    },
+    {
+      "leadId": "L-20261007-003",
+      "company": "Synthetic Studio 03",
+      "website": "https://lead03.example.com",
+      "source": "Accelerator",
+      "signal": "Accelerator batch",
+      "stage": "Researched",
+      "fit": 4
+    },
+    {
+      "leadId": "L-20261007-004",
+      "company": "Synthetic Studio 04",
+      "website": "https://lead04.example.com",
+      "source": "LinkedIn",
+      "signal": "Public post asking for devs",
+      "stage": "Researched",
+      "fit": 3
+    },
+    {
+      "leadId": "L-20261007-005",
+      "company": "Synthetic Studio 05",
+      "website": "https://lead05.example.com",
+      "source": "Other",
+      "signal": "Manual operations",
+      "stage": "Drafted",
+      "fit": 5
+    },
+    {
+      "leadId": "L-20261007-006",
+      "company": "Synthetic Studio 06",
+      "website": "https://lead06.example.com",
+      "source": "Warm intro",
+      "signal": "Other",
+      "stage": "Contacted",
+      "touches": 1
+    },
+    {
+      "leadId": "L-20261007-007",
+      "company": "Synthetic Studio 07",
+      "website": "https://lead07.example.com",
+      "source": "Existing client",
+      "signal": "Referral",
+      "stage": "Replied",
+      "replyClass": "interested"
+    },
+    {
+      "leadId": "L-20261007-008",
+      "company": "Synthetic Studio 08",
+      "website": "https://lead08.example.com",
+      "source": "Inbound",
+      "signal": "Other",
+      "stage": "Call booked"
+    },
+    {
+      "leadId": "L-20261007-009",
+      "company": "Synthetic Studio 09",
+      "website": "https://lead09.example.com",
+      "source": "Alumni",
+      "signal": "Referral",
+      "stage": "Nurture"
+    },
+    {
+      "leadId": "L-20261007-010",
+      "company": "Synthetic Studio 10",
+      "website": "https://lead10.example.com",
+      "source": "Agency partner",
+      "signal": "Phase 2",
+      "stage": "Disqualified"
+    }
+  ]
+}

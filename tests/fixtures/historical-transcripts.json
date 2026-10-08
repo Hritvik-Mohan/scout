@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "records": [
+    {
+      "transcriptId": "transcript-001",
+      "occurredAt": "2026-09-01T10:00:00.000Z",
+      "participants": ["buyer", "seller"],
+      "transcript": "Buyer needs a two-week discovery to clarify scope. Seller explains the mentor-led student-build model.",
+      "expectedPackage": "Discovery Sprint"
+    },
+    {
+      "transcriptId": "transcript-002",
+      "occurredAt": "2026-09-02T10:00:00.000Z",
+      "participants": ["buyer", "seller"],
+      "transcript": "Buyer has validated requirements and needs a first production release. Seller outlines an MVP engagement.",
+      "expectedPackage": "MVP Launch"
+    },
+    {
+      "transcriptId": "transcript-003",
+      "occurredAt": "2026-09-03T10:00:00.000Z",
+      "participants": ["buyer", "seller"],
+      "transcript": "Buyer has an existing product and needs a dedicated delivery team. Seller describes a managed pod.",
+      "expectedPackage": "Managed Pod"
+    }
+  ]
+}

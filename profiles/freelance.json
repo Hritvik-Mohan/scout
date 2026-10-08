@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "id": "freelance_default",
+  "name": "Freelance Project Scout",
+  "description": "Find paid, well-scoped freelance software projects with a reachable buyer.",
+  "purpose": "freelance",
+  "targetEntity": "A company or founder commissioning a defined software project",
+  "geographyPriority": ["India", "International"],
+  "criteria": [
+    {
+      "id": "skill_fit",
+      "label": "Skill fit",
+      "description": "The requested work matches the configured technical capabilities.",
+      "weight": 3,
+      "required": true,
+      "evidenceRequired": true
+    },
+    {
+      "id": "scoped_project",
+      "label": "Scoped project",
+      "description": "The buyer describes a concrete deliverable rather than an open-ended resource request.",
+      "weight": 3,
+      "required": true,
+      "evidenceRequired": true
+    },
+    {
+      "id": "buyer_reachable",
+      "label": "Reachable buyer",
+      "description": "A founder, hiring manager, or project owner can be contacted.",
+      "weight": 2,
+      "required": true,
+      "evidenceRequired": true
+    },
+    {
+      "id": "budget_fit",
+      "label": "Budget fit",
+      "description": "The stated or inferred budget supports professional delivery.",
+      "weight": 2,
+      "required": false,
+      "evidenceRequired": true
+    },
+    {
+      "id": "timeline_fit",
+      "label": "Timeline fit",
+      "description": "The expected start and delivery window are workable.",
+      "weight": 1,
+      "required": false,
+      "evidenceRequired": true
+    }
+  ],
+  "signals": [
+    {
+      "id": "explicit_freelancer_need",
+      "label": "Explicit freelancer need",
+      "description": "The source explicitly asks for a freelancer, consultant, or studio.",
+      "weight": 2,
+      "required": false,
+      "evidenceRequired": true
+    },
+    {
+      "id": "public_build_request",
+      "label": "Public build request",
+      "description": "A decision maker publicly describes a product or feature they need built.",
+      "weight": 1,
+      "required": false,
+      "evidenceRequired": true
+    }
+  ],
+  "disqualifiers": [
+    {
+      "id": "unpaid",
+      "label": "Unpaid work",
+      "description": "The opportunity offers no monetary compensation.",
+      "hard": true
+    },
+    {
+      "id": "scam_risk",
+      "label": "Scam risk",
+      "description": "The source or buyer shows strong fraud indicators.",
+      "hard": true
+    },
+    {
+      "id": "staff_augmentation_only",
+      "label": "Staff augmentation only",
+      "description": "The request is exclusively for hourly staff augmentation.",
+      "hard": false
+    }
+  ],
+  "thresholds": { "keep": 2.5, "action": 3.75 },
+  "outputFields": [
+    "title",
+    "company",
+    "source_url",
+    "contact",
+    "geography",
+    "score",
+    "status",
+    "evidence"
+  ]
+}

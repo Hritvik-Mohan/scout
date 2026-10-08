@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "records": [
+    {
+      "signalId": "signal-001",
+      "company": "Synthetic Studio 01",
+      "signal": "Funding round",
+      "observedAt": "2026-10-01T08:00:00.000Z",
+      "sourceUrl": "https://example.com/signals/001",
+      "excerpt": "Synthetic company announced a seed round."
+    },
+    {
+      "signalId": "signal-002",
+      "company": "Synthetic Studio 02",
+      "signal": "Contract dev job post",
+      "observedAt": "2026-10-01T08:01:00.000Z",
+      "sourceUrl": "https://example.com/signals/002",
+      "excerpt": "Synthetic company posted a contract engineering role."
+    },
+    {
+      "signalId": "signal-003",
+      "company": "Synthetic Studio 03",
+      "signal": "Accelerator batch",
+      "observedAt": "2026-10-01T08:02:00.000Z",
+      "sourceUrl": "https://example.com/signals/003",
+      "excerpt": "Synthetic company joined an accelerator cohort."
+    },
+    {
+      "signalId": "signal-004",
+      "company": "Synthetic Studio 04",
+      "signal": "Public post asking for devs",
+      "observedAt": "2026-10-01T08:03:00.000Z",
+      "sourceUrl": "https://example.com/signals/004",
+      "excerpt": "Synthetic founder requested development support."
+    },
+    {
+      "signalId": "signal-005",
+      "company": "Synthetic Studio 05",
+      "signal": "Manual operations",
+      "observedAt": "2026-10-01T08:04:00.000Z",
+      "sourceUrl": "https://example.com/signals/005",
+      "excerpt": "Synthetic workflow still depends on manual operations."
+    }
+  ]
+}

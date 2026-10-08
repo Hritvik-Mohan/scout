@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://newtonschool.co/schemas/a1-codex-result.schema.json",
+  "title": "A1 Codex extraction result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "batchId", "model", "decisions"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "batchId": { "type": "string", "format": "uuid" },
+    "model": { "const": "codex" },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["documentId", "status", "candidate"],
+            "properties": {
+              "documentId": { "type": "string", "minLength": 1 },
+              "status": { "const": "accepted" },
+              "candidate": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "company",
+                  "website",
+                  "signal",
+                  "signal_date",
+                  "signal_url",
+                  "segment",
+                  "reason"
+                ],
+                "properties": {
+                  "company": { "type": "string", "minLength": 1 },
+                  "website": {
+                    "type": ["string", "null"]
+                  },
+                  "signal": {
+                    "enum": [
+                      "Funding round",
+                      "Contract dev job post",
+                      "Accelerator batch",
+                      "Public post asking for devs",
+                      "Manual operations",
+                      "Other"
+                    ]
+                  },
+                  "signal_date": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                  },
+                  "signal_url": { "type": "string", "format": "uri" },
+                  "segment": { "type": "string", "minLength": 1 },
+                  "reason": { "type": "string", "minLength": 1 }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["documentId", "status", "reason", "detail"],
+            "properties": {
+              "documentId": { "type": "string", "minLength": 1 },
+              "status": { "const": "rejected" },
+              "reason": {
+                "enum": [
+                  "no_buying_signal",
+                  "unverifiable",
+                  "stale",
+                  "outside_icp",
+                  "duplicate_document",
+                  "other"
+                ]
+              },
+              "detail": { "type": "string", "minLength": 1 }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

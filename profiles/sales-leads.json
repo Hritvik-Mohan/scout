@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "sales_leads_default",
+  "name": "Sales Lead Scout",
+  "description": "Find companies with ICP fit, a timely need, sufficient budget, and a reachable decision maker.",
+  "purpose": "sales_leads",
+  "targetEntity": "A company that can buy a defined professional service",
+  "geographyPriority": ["India", "International"],
+  "criteria": [
+    {
+      "id": "icp_match",
+      "label": "ICP match",
+      "description": "The company matches the configured industry, size, stage, and situation.",
+      "weight": 3,
+      "required": true,
+      "evidenceRequired": true
+    },
+    {
+      "id": "service_need",
+      "label": "Service need",
+      "description": "The company has a problem that maps to the configured offer.",
+      "weight": 3,
+      "required": true,
+      "evidenceRequired": true
+    },
+    {
+      "id": "buyer_reachable",
+      "label": "Reachable decision maker",
+      "description": "A founder, CTO, product leader, or operations leader can be contacted.",
+      "weight": 2,
+      "required": true,
+      "evidenceRequired": true
+    },
+    {
+      "id": "budget_fit",
+      "label": "Budget fit",
+      "description": "Available evidence suggests the company can pay the configured minimum.",
+      "weight": 2,
+      "required": false,
+      "evidenceRequired": true
+    },
+    {
+      "id": "delivery_fit",
+      "label": "Delivery fit",
+      "description": "The work fits the team's capabilities, scope, and risk tolerance.",
+      "weight": 2,
+      "required": true,
+      "evidenceRequired": true
+    }
+  ],
+  "signals": [
+    {
+      "id": "recent_funding",
+      "label": "Recent funding",
+      "description": "The company announced funding in the configured recency window.",
+      "weight": 2,
+      "required": false,
+      "evidenceRequired": true
+    },
+    {
+      "id": "explicit_build_need",
+      "label": "Explicit build need",
+      "description": "A credible source describes a current product, AI, automation, or internal-tool need.",
+      "weight": 2,
+      "required": false,
+      "evidenceRequired": true
+    },
+    {
+      "id": "product_launch",
+      "label": "Product launch",
+      "description": "A launch or expansion creates a plausible delivery need.",
+      "weight": 1,
+      "required": false,
+      "evidenceRequired": true
+    }
+  ],
+  "disqualifiers": [
+    {
+      "id": "below_budget",
+      "label": "Below minimum budget",
+      "description": "Confirmed budget is below the configured floor.",
+      "hard": true
+    },
+    {
+      "id": "staff_augmentation_only",
+      "label": "Staff augmentation only",
+      "description": "The buyer only wants hourly personnel without outcome ownership.",
+      "hard": true
+    },
+    {
+      "id": "compliance_mismatch",
+      "label": "Compliance mismatch",
+      "description": "The work requires unsupported regulatory or safety capabilities.",
+      "hard": true
+    }
+  ],
+  "thresholds": { "keep": 2.5, "action": 3.75 },
+  "outputFields": [
+    "company",
+    "website",
+    "source_url",
+    "buyer",
+    "email",
+    "geography",
+    "score",
+    "status",
+    "evidence"
+  ]
+}

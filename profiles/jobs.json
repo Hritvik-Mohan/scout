@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "id": "jobs_default",
+  "name": "Job Opportunity Scout",
+  "description": "Find open roles that match a candidate's skills, level, location, and compensation needs.",
+  "purpose": "jobs",
+  "targetEntity": "An actively hiring company with a relevant open role",
+  "geographyPriority": ["India", "Remote", "International"],
+  "criteria": [
+    {
+      "id": "role_fit",
+      "label": "Role fit",
+      "description": "The role matches the target function and responsibilities.",
+      "weight": 3,
+      "required": true,
+      "evidenceRequired": true
+    },
+    {
+      "id": "skill_fit",
+      "label": "Skill fit",
+      "description": "The required skills substantially match the candidate's capabilities.",
+      "weight": 3,
+      "required": true,
+      "evidenceRequired": true
+    },
+    {
+      "id": "seniority_fit",
+      "label": "Seniority fit",
+      "description": "The role's experience expectations match the candidate.",
+      "weight": 2,
+      "required": true,
+      "evidenceRequired": true
+    },
+    {
+      "id": "compensation_fit",
+      "label": "Compensation fit",
+      "description": "Published or credible compensation meets the configured floor.",
+      "weight": 2,
+      "required": false,
+      "evidenceRequired": true
+    },
+    {
+      "id": "location_fit",
+      "label": "Location fit",
+      "description": "Location, remote policy, and working hours are compatible.",
+      "weight": 2,
+      "required": true,
+      "evidenceRequired": true
+    }
+  ],
+  "signals": [
+    {
+      "id": "open_role",
+      "label": "Verified open role",
+      "description": "The role is present on an official or current hiring source.",
+      "weight": 2,
+      "required": false,
+      "evidenceRequired": true
+    },
+    {
+      "id": "referral_path",
+      "label": "Referral path",
+      "description": "A relevant employee or direct hiring contact is identifiable.",
+      "weight": 1,
+      "required": false,
+      "evidenceRequired": true
+    }
+  ],
+  "disqualifiers": [
+    {
+      "id": "visa_mismatch",
+      "label": "Work authorization mismatch",
+      "description": "The role requires unavailable work authorization.",
+      "hard": true
+    },
+    {
+      "id": "compensation_below_floor",
+      "label": "Compensation below floor",
+      "description": "Confirmed compensation is below the configured minimum.",
+      "hard": true
+    },
+    {
+      "id": "seniority_mismatch",
+      "label": "Seniority mismatch",
+      "description": "The role is clearly outside the target seniority.",
+      "hard": true
+    }
+  ],
+  "thresholds": { "keep": 2.75, "action": 3.75 },
+  "outputFields": [
+    "role",
+    "company",
+    "source_url",
+    "location",
+    "compensation",
+    "contact",
+    "score",
+    "status",
+    "evidence"
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "opportunityId": "example-freelance-001",
+  "title": "Build a customer operations dashboard",
+  "sourceUrl": "https://example.com/opportunities/customer-dashboard",
+  "geography": "India",
+  "criteria": {
+    "skill_fit": {
+      "matched": true,
+      "rationale": "The request uses the configured web application stack.",
+      "sources": ["https://example.com/opportunities/customer-dashboard"]
+    },
+    "scoped_project": {
+      "matched": true,
+      "rationale": "The brief names users, workflows, and deliverables.",
+      "sources": ["https://example.com/opportunities/customer-dashboard"]
+    },
+    "buyer_reachable": {
+      "matched": true,
+      "rationale": "The founder published a direct contact route.",
+      "sources": ["https://example.com/opportunities/customer-dashboard"]
+    },
+    "budget_fit": {
+      "matched": true,
+      "rationale": "The stated budget exceeds the configured minimum.",
+      "sources": ["https://example.com/opportunities/customer-dashboard"]
+    },
+    "timeline_fit": {
+      "matched": true,
+      "rationale": "The delivery window is eight weeks.",
+      "sources": ["https://example.com/opportunities/customer-dashboard"]
+    }
+  },
+  "signals": {
+    "explicit_freelancer_need": {
+      "matched": true,
+      "rationale": "The brief explicitly invites independent studios.",
+      "sources": ["https://example.com/opportunities/customer-dashboard"]
+    },
+    "public_build_request": {
+      "matched": true,
+      "rationale": "The project request is public and current.",
+      "sources": ["https://example.com/opportunities/customer-dashboard"]
+    }
+  },
+  "disqualifiers": []
+}
