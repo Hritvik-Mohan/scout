@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { resolve } from "node:path";
+import { mkdir, writeFile } from "node:fs/promises";
+import { dirname, resolve } from "node:path";
 
 import { GoogleAuthAccessTokenProvider } from "../integrations/google-auth.js";
 import { GoogleSheetsRestTransport } from "../integrations/google-sheets.js";
@@ -86,6 +87,7 @@ for (const [index, result] of discoveryResults.entries()) {
 const uniqueJobs = new Map<string, DiscoveredJob>();
 for (const job of discoveredJobs) uniqueJobs.set(job.id, job);
 const jobs = [...uniqueJobs.values()];
+const keptJobs: DiscoveredJob[] = [];
 let kept = 0;
 let action = 0;
 let inserted = 0;
@@ -99,11 +101,19 @@ for (const job of jobs) {
     continue;
   }
   kept += 1;
+  keptJobs.push(job);
   if (score.status === "action") action += 1;
   const outcome = await repository.upsert({ job, assessed, score });
   if (outcome === "inserted") inserted += 1;
   else updated += 1;
 }
+// Kept postings are cached locally so the review step can read full
+// descriptions without polling every source again.
+const cachePath = resolve(
+  process.env.SCOUT_JOB_CACHE_PATH ?? ".local/job-cache.json",
+);
+await mkdir(dirname(cachePath), { recursive: true });
+await writeFile(cachePath, `${JSON.stringify(keptJobs)}\n`);
 const finishedAt = new Date();
 const status =
   failures.length === 0

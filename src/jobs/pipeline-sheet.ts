@@ -204,8 +204,8 @@ export class JobPipelineSheetRepository {
     const rowNumber = rowIndex + 2;
     await this.transport.batchUpdateValues([
       {
-        range: `'Job Pipeline'!A${String(rowNumber)}:W${String(rowNumber)}`,
-        values: [Array.from({ length: 23 }, () => "")],
+        range: `'Job Pipeline'!A${String(rowNumber)}:AA${String(rowNumber)}`,
+        values: [Array.from({ length: 27 }, () => "")],
       },
     ]);
     rows[rowIndex] = [];

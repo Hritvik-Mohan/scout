@@ -181,7 +181,7 @@ export async function initializeJobSearchWorkbook(
     range: string;
     values: readonly (readonly unknown[])[];
   }[] = [
-    { range: `'${JOB_PIPELINE_SHEET}'!A1:W1`, values: [JOB_PIPELINE_HEADERS] },
+    { range: `'${JOB_PIPELINE_SHEET}'!A1:AA1`, values: [JOB_PIPELINE_HEADERS] },
     { range: `'${JOB_SOURCES_SHEET}'!A1:H1`, values: [JOB_SOURCE_HEADERS] },
     { range: `'${JOB_RUNS_SHEET}'!A1:H1`, values: [JOB_RUN_HEADERS] },
     {
@@ -231,7 +231,7 @@ export async function initializeJobSearchWorkbook(
 
   const pipelineWidths = [
     130, 230, 180, 260, 105, 170, 115, 150, 145, 145, 220, 150, 180, 180, 80,
-    90, 300, 80, 115, 120, 180, 280, 260,
+    90, 300, 80, 115, 120, 180, 280, 260, 60, 100, 360, 110,
   ];
   await transport.batchUpdateSpreadsheet([
     headerFormat(pipelineId, JOB_PIPELINE_HEADERS.length),
@@ -450,7 +450,7 @@ export async function initializeJobSearchWorkbook(
 
   const [pipeline, sources, runs, profileValues, companies] = await Promise.all(
     [
-      transport.getValues(`'${JOB_PIPELINE_SHEET}'!A1:W1`),
+      transport.getValues(`'${JOB_PIPELINE_SHEET}'!A1:AA1`),
       transport.getValues(`'${JOB_SOURCES_SHEET}'!A1:H1`),
       transport.getValues(`'${JOB_RUNS_SHEET}'!A1:H1`),
       transport.getValues(`'${JOB_PROFILE_SHEET}'!A1:B1`),
