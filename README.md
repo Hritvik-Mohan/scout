@@ -95,6 +95,29 @@ Copy one, change its criteria and signals, and validate it before use. See
 [`docs/profile-format.md`](docs/profile-format.md) for the format and scoring
 rules.
 
+## Rank the pipeline and draft applications
+
+The keyword score only decides what is kept. Ranking comes from a review of each
+kept posting against [`docs/job-search-icp.md`](docs/job-search-icp.md):
+
+```bash
+npm run jobs:review:pending                    # export unreviewed roles
+npm run jobs:review:apply -- <reviews.json>   # write reviews to the Sheet
+npm run jobs:digest                            # print what to apply to next
+```
+
+`jobs:update` caches kept postings in `.local/job-cache.json`.
+`jobs:review:pending` writes the roles that still need a review, with their
+descriptions, to `.local/job-reviews/pending.json`. A reviewer (a person or an
+AI session) reads them and produces a JSON array matching `jobReviewSchema` in
+[`src/jobs/review.ts`](src/jobs/review.ts): a 0-100 fit, a verdict, up to three
+reasons and gaps, resume evidence to lead with, and an outreach draft.
+
+`jobs:review:apply` writes `Fit`, `Verdict`, `Fit Summary`, and `Reviewed` to
+Job Pipeline columns X:AA and the drafts to the `Application Kit` tab. Drafts
+are never sent. `jobs:digest` lists the top open roles by fit and postings old
+enough to need a freshness check.
+
 ## Discover and enrich Bengaluru companies
 
 Run:
