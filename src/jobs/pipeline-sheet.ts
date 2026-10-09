@@ -5,6 +5,7 @@ import type {
 import type { ScoutScore } from "../profiles/scorer.js";
 import type { AssessedJob } from "./assess.js";
 import { jobFlags } from "./flags.js";
+import { normalizeCompanyName } from "./lets-code-workbook.js";
 import type { DiscoveredJob } from "./model.js";
 
 export interface JobPipelineWrite {
@@ -52,14 +53,14 @@ const workMode = (job: DiscoveredJob): string => {
 };
 
 export class JobPipelineSheetRepository {
-  private pipelineRows: Promise<(readonly unknown[])[]> | undefined;
+  private pipelineRows: Promise<unknown[][]> | undefined;
   private companyContacts:
     | Promise<ReadonlyMap<string, { contact: string; referral: string }>>
     | undefined;
 
   constructor(private readonly transport: GoogleSheetsTransport) {}
 
-  private loadPipelineRows(): Promise<(readonly unknown[])[]> {
+  private loadPipelineRows(): Promise<unknown[][]> {
     this.pipelineRows ??= this.transport
       .getValues("'Job Pipeline'!A2:W1000")
       .then((rows) => rows.map((row) => [...row]));
@@ -75,7 +76,7 @@ export class JobPipelineSheetRepository {
         (rows) =>
           new Map(
             rows.flatMap((row) => {
-              const name = text(row[0]).trim().toLowerCase();
+              const name = normalizeCompanyName(text(row[0]));
               if (name === "") return [];
               const contact =
                 text(row[14]).trim() ||
@@ -89,127 +90,148 @@ export class JobPipelineSheetRepository {
       )
       .catch(() => new Map());
     return (
-      (await this.companyContacts).get(company.trim().toLowerCase()) ?? {
+      (await this.companyContacts).get(normalizeCompanyName(company)) ?? {
         contact: "",
         referral: "",
       }
     );
   }
 
-  async upsert(write: JobPipelineWrite): Promise<"inserted" | "updated"> {
-    const companyContact = await this.contactForCompany(write.job.company);
+  /**
+   * Writes every role in one batch so large refreshes stay within the Sheets
+   * per-minute quota, then verifies the automated fields with a single read.
+   */
+  async upsertMany(
+    writes: readonly JobPipelineWrite[],
+    now: Date = new Date(),
+  ): Promise<{ inserted: number; updated: number }> {
     const rows = await this.loadPipelineRows();
-    const rowIndex = rows.findIndex((row) => row[0] === write.job.id);
-    const rowNumber = rowIndex < 0 ? firstEmptyRow(rows, 2) : rowIndex + 2;
-    const evidence = JSON.stringify({
-      source: write.job.provider,
-      reasons: write.score.reasons,
-      criteria: write.assessed.assessment.criteria,
-      signals: write.assessed.assessment.signals,
-    });
-    const automatedValues = [
-      write.job.id,
-      write.job.title,
-      write.job.company,
-      write.job.url,
-      write.job.publishedAt.slice(0, 10),
-      write.job.candidateLocation,
-      workMode(write.job),
-      write.job.jobType ?? "Unknown - verify",
-      "Unknown - verify",
-      write.assessed.experienceRequired,
-      write.assessed.techStack.join(", "),
-      write.job.salary ?? "Not published",
-      companyContact.contact,
-      companyContact.referral,
-      write.score.score,
-      write.score.status,
-      evidence,
-    ];
-    const updates: SheetValueUpdate[] = [
-      {
+    const updates: SheetValueUpdate[] = [];
+    const expected: { rowNumber: number; write: JobPipelineWrite }[] = [];
+    let inserted = 0;
+    for (const write of writes) {
+      const companyContact = await this.contactForCompany(write.job.company);
+      const rowIndex = rows.findIndex((row) => row[0] === write.job.id);
+      const rowNumber = rowIndex < 0 ? firstEmptyRow(rows, 2) : rowIndex + 2;
+      const evidence = JSON.stringify({
+        source: write.job.provider,
+        reasons: write.score.reasons,
+        criteria: write.assessed.assessment.criteria,
+        signals: write.assessed.assessment.signals,
+      });
+      const automatedValues = [
+        write.job.id,
+        write.job.title,
+        write.job.company,
+        write.job.url,
+        write.job.publishedAt.slice(0, 10),
+        write.job.candidateLocation,
+        workMode(write.job),
+        write.job.jobType ?? "Unknown - verify",
+        "Unknown - verify",
+        write.assessed.experienceRequired,
+        write.assessed.techStack.join(", "),
+        write.job.salary ?? "Not published",
+        companyContact.contact,
+        companyContact.referral,
+        write.score.score,
+        write.score.status,
+        evidence,
+      ];
+      updates.push({
         range: `'Job Pipeline'!A${String(rowNumber)}:Q${String(rowNumber)}`,
         values: [automatedValues],
-      },
-    ];
-    if (rowIndex < 0) {
-      updates.push({
-        range: `'Job Pipeline'!R${String(rowNumber)}:V${String(rowNumber)}`,
-        values: [
-          [
-            false,
-            "",
-            "Discovered",
-            "Review role and verify employment terms",
-            `Source: ${write.job.provider}`,
-          ],
-        ],
       });
+      const newHuman = [
+        false,
+        "",
+        "Discovered",
+        "Review role and verify employment terms",
+        `Source: ${write.job.provider}`,
+      ];
+      if (rowIndex < 0) {
+        inserted += 1;
+        updates.push({
+          range: `'Job Pipeline'!R${String(rowNumber)}:V${String(rowNumber)}`,
+          values: [newHuman],
+        });
+      }
+      const duplicate = rows.find(
+        (row) =>
+          row[0] !== write.job.id &&
+          text(row[0]).trim() !== "" &&
+          text(row[1]).trim().toLowerCase() ===
+            write.job.title.trim().toLowerCase() &&
+          text(row[2]).trim().toLowerCase() ===
+            write.job.company.trim().toLowerCase(),
+      );
+      const flags = [
+        ...jobFlags(write.job, write.assessed.experienceRequired, now),
+        ...(duplicate === undefined
+          ? []
+          : [`Possible duplicate of ${text(duplicate[0])}`]),
+      ].join("; ");
+      updates.push({
+        range: `'Job Pipeline'!W${String(rowNumber)}:W${String(rowNumber)}`,
+        values: [[flags]],
+      });
+      const preservedHuman =
+        rowIndex < 0 ? newHuman : (rows[rowIndex] ?? []).slice(17, 22);
+      while (preservedHuman.length < 5) preservedHuman.push("");
+      while (rows.length < rowNumber - 2) rows.push([]);
+      rows[rowNumber - 2] = [...automatedValues, ...preservedHuman, flags];
+      expected.push({ rowNumber, write });
     }
-    const duplicate = rows.find(
-      (row) =>
-        row[0] !== write.job.id &&
-        text(row[0]).trim() !== "" &&
-        text(row[1]).trim().toLowerCase() ===
-          write.job.title.trim().toLowerCase() &&
-        text(row[2]).trim().toLowerCase() ===
-          write.job.company.trim().toLowerCase(),
-    );
-    const flags = [
-      ...jobFlags(write.job, write.assessed.experienceRequired),
-      ...(duplicate === undefined
-        ? []
-        : [`Possible duplicate of ${text(duplicate[0])}`]),
-    ].join("; ");
-    updates.push({
-      range: `'Job Pipeline'!W${String(rowNumber)}:W${String(rowNumber)}`,
-      values: [[flags]],
-    });
+    if (updates.length === 0) return { inserted: 0, updated: 0 };
     await this.transport.batchUpdateValues(updates);
-    const cachedRow = rows[rowNumber - 2] ?? [];
-    const preservedHuman =
-      rowIndex < 0
-        ? [
-            false,
-            "",
-            "Discovered",
-            "Review role and verify employment terms",
-            `Source: ${write.job.provider}`,
-          ]
-        : cachedRow.slice(17, 22);
-    rows[rowNumber - 2] = [...automatedValues, ...preservedHuman, flags];
     const verification = await this.transport.getValues(
-      `'Job Pipeline'!A${String(rowNumber)}:P${String(rowNumber)}`,
+      "'Job Pipeline'!A2:P1000",
     );
-    const verificationRow = verification.at(0);
-    if (
-      verificationRow?.[0] !== write.job.id ||
-      Number(verificationRow[14]) !== write.score.score ||
-      verificationRow[15] !== write.score.status
-    ) {
-      throw new Error(`Job Pipeline verification failed for ${write.job.id}`);
+    for (const { rowNumber, write } of expected) {
+      const row = verification[rowNumber - 2];
+      if (
+        row?.[0] !== write.job.id ||
+        Number(row[14]) !== write.score.score ||
+        row[15] !== write.score.status
+      ) {
+        throw new Error(`Job Pipeline verification failed for ${write.job.id}`);
+      }
     }
-    return rowIndex < 0 ? "inserted" : "updated";
+    return { inserted, updated: writes.length - inserted };
+  }
+
+  async upsert(write: JobPipelineWrite): Promise<"inserted" | "updated"> {
+    const outcome = await this.upsertMany([write]);
+    return outcome.inserted === 1 ? "inserted" : "updated";
+  }
+
+  /** Clears untracked rows for the given roles in one batch. */
+  async removeManyIfUntracked(
+    opportunityIds: readonly string[],
+  ): Promise<number> {
+    const rows = await this.loadPipelineRows();
+    const updates: SheetValueUpdate[] = [];
+    for (const opportunityId of opportunityIds) {
+      const rowIndex = rows.findIndex((row) => row[0] === opportunityId);
+      if (rowIndex < 0) continue;
+      const row = rows[rowIndex];
+      const applied =
+        row?.[17] === true || text(row?.[17]).toLowerCase() === "true";
+      const stage = text(row?.[19]);
+      if (applied || (stage !== "" && stage !== "Discovered")) continue;
+      const rowNumber = rowIndex + 2;
+      updates.push({
+        range: `'Job Pipeline'!A${String(rowNumber)}:AA${String(rowNumber)}`,
+        values: [Array.from({ length: 27 }, () => "")],
+      });
+      rows[rowIndex] = [];
+    }
+    if (updates.length > 0) await this.transport.batchUpdateValues(updates);
+    return updates.length;
   }
 
   async removeIfUntracked(opportunityId: string): Promise<boolean> {
-    const rows = await this.loadPipelineRows();
-    const rowIndex = rows.findIndex((row) => row[0] === opportunityId);
-    if (rowIndex < 0) return false;
-    const row = rows[rowIndex];
-    const applied =
-      row?.[17] === true || text(row?.[17]).toLowerCase() === "true";
-    const stage = text(row?.[19]);
-    if (applied || (stage !== "" && stage !== "Discovered")) return false;
-    const rowNumber = rowIndex + 2;
-    await this.transport.batchUpdateValues([
-      {
-        range: `'Job Pipeline'!A${String(rowNumber)}:AA${String(rowNumber)}`,
-        values: [Array.from({ length: 27 }, () => "")],
-      },
-    ]);
-    rows[rowIndex] = [];
-    return true;
+    return (await this.removeManyIfUntracked([opportunityId])) === 1;
   }
 
   async appendRun(run: JobRunSummary): Promise<void> {

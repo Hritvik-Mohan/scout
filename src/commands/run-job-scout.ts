@@ -3,10 +3,16 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 
 import { GoogleAuthAccessTokenProvider } from "../integrations/google-auth.js";
-import { GoogleSheetsRestTransport } from "../integrations/google-sheets.js";
+import {
+  GoogleSheetsRestTransport,
+  type SheetValueUpdate,
+} from "../integrations/google-sheets.js";
 import { assessJob } from "../jobs/assess.js";
 import type { DiscoveredJob } from "../jobs/model.js";
-import { JobPipelineSheetRepository } from "../jobs/pipeline-sheet.js";
+import {
+  JobPipelineSheetRepository,
+  type JobPipelineWrite,
+} from "../jobs/pipeline-sheet.js";
 import {
   createJobDiscoveryAdapter,
   parseConfiguredJobSources,
@@ -49,11 +55,11 @@ const request = {
   endAt: startedAt,
   maxResults,
 };
-const sourceRows = await transport.getValues("'Sources'!A2:H200");
+const sourceRows = await transport.getValues("'Sources'!A2:H1000");
 const sources = parseConfiguredJobSources(sourceRows);
 if (sources.length === 0) {
   throw new Error(
-    "No active Remotive, Greenhouse, Lever, SmartRecruiters, or Ashby sources are configured in Sources!A2:H200",
+    "No active Remotive, Greenhouse, Lever, SmartRecruiters, or Ashby sources are configured in Sources!A2:H1000",
   );
 }
 const discoveryResults = await Promise.allSettled(
@@ -65,17 +71,16 @@ const discoveryResults = await Promise.allSettled(
 const failures: string[] = [];
 const discoveredJobs: DiscoveredJob[] = [];
 const checkedAt = new Date().toISOString();
+const checkedUpdates: SheetValueUpdate[] = [];
 for (const [index, result] of discoveryResults.entries()) {
   const source = sources[index];
   if (source === undefined) continue;
   if (result.status === "fulfilled") {
     discoveredJobs.push(...result.value.jobs);
-    await transport.batchUpdateValues([
-      {
-        range: `'Sources'!G${String(source.rowNumber)}:G${String(source.rowNumber)}`,
-        values: [[checkedAt]],
-      },
-    ]);
+    checkedUpdates.push({
+      range: `'Sources'!G${String(source.rowNumber)}:G${String(source.rowNumber)}`,
+      values: [[checkedAt]],
+    });
   } else {
     const message =
       result.reason instanceof Error
@@ -84,29 +89,29 @@ for (const [index, result] of discoveryResults.entries()) {
     failures.push(`${source.id}: ${message}`);
   }
 }
+if (checkedUpdates.length > 0)
+  await transport.batchUpdateValues(checkedUpdates);
 const uniqueJobs = new Map<string, DiscoveredJob>();
 for (const job of discoveredJobs) uniqueJobs.set(job.id, job);
 const jobs = [...uniqueJobs.values()];
 const keptJobs: DiscoveredJob[] = [];
-let kept = 0;
+const writes: JobPipelineWrite[] = [];
+const rejectedIds: string[] = [];
 let action = 0;
-let inserted = 0;
-let updated = 0;
-let pruned = 0;
 for (const job of jobs) {
   const assessed = assessJob(job);
   const score = scoreOpportunity(profile, assessed.assessment);
   if (score.status !== "keep" && score.status !== "action") {
-    if (await repository.removeIfUntracked(job.id)) pruned += 1;
+    rejectedIds.push(job.id);
     continue;
   }
-  kept += 1;
   keptJobs.push(job);
   if (score.status === "action") action += 1;
-  const outcome = await repository.upsert({ job, assessed, score });
-  if (outcome === "inserted") inserted += 1;
-  else updated += 1;
+  writes.push({ job, assessed, score });
 }
+const kept = writes.length;
+const pruned = await repository.removeManyIfUntracked(rejectedIds);
+const { inserted, updated } = await repository.upsertMany(writes, startedAt);
 // Kept postings are cached locally so the review step can read full
 // descriptions without polling every source again.
 const cachePath = resolve(

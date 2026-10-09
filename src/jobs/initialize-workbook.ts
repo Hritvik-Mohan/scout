@@ -165,7 +165,7 @@ export async function initializeJobSearchWorkbook(
   const profileId = requiredSheetId(ids, JOB_PROFILE_SHEET);
   const companiesId = requiredSheetId(ids, JOB_COMPANIES_SHEET);
   const existingSourceRows = await transport.getValues(
-    `'${JOB_SOURCES_SHEET}'!A2:H200`,
+    `'${JOB_SOURCES_SHEET}'!A2:H1000`,
   );
   const profileRows = [
     ["Field", "Value"],

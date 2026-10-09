@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import type { GoogleSheetsWorkbookTransport } from "../src/integrations/google-sheets.js";
+import { boardSlugCandidates } from "../src/jobs/board-detection.js";
 import { JobReviewSheetRepository } from "../src/jobs/review-sheet.js";
 import { stripMarkup } from "../src/jobs/text.js";
 import {
   buildJobDigest,
+  buildOutcomeReport,
   fitSummary,
+  freshnessPenalty,
   jobReviewSchema,
   type JobReview,
 } from "../src/jobs/review.js";
@@ -25,6 +28,9 @@ const pipelineRow = (
   id: string,
   options: {
     applied?: boolean;
+    appliedOn?: string;
+    stage?: string;
+    flags?: string;
     fit?: number;
     verdict?: string;
     posted?: string;
@@ -37,6 +43,9 @@ const pipelineRow = (
   row[3] = `https://example.com/${id}`;
   row[4] = options.posted ?? "2026-10-01";
   row[17] = options.applied ?? false;
+  row[18] = options.appliedOn ?? "";
+  row[19] = options.stage ?? "Discovered";
+  row[22] = options.flags ?? "";
   row[23] = options.fit ?? "";
   row[24] = options.verdict ?? "";
   return row;
@@ -69,7 +78,7 @@ describe("job reviews", () => {
     );
   });
 
-  it("ranks open reviewed roles and lists stale postings", () => {
+  it("ranks open roles by fit less a freshness penalty", () => {
     const digest = buildJobDigest(
       [
         pipelineRow("a", { fit: 60, verdict: "apply" }),
@@ -77,14 +86,70 @@ describe("job reviews", () => {
         pipelineRow("c", { fit: 95, verdict: "apply_now", applied: true }),
         pipelineRow("d", { fit: 20, verdict: "skip" }),
         pipelineRow("e", { posted: "2026-03-01" }),
+        pipelineRow("f", { fit: 75, verdict: "apply", posted: "2026-03-01" }),
+        pipelineRow("g", {
+          fit: 70,
+          verdict: "apply",
+          applied: true,
+          appliedOn: "2026-09-25",
+          stage: "Applied",
+        }),
       ],
       { now: new Date("2026-10-09T00:00:00Z") },
     );
-    expect(digest).toContain("5 roles, 1 applied, 1 awaiting review");
+    expect(digest).toContain("7 roles, 2 applied, 1 awaiting review");
     expect(digest.indexOf("Role b")).toBeLessThan(digest.indexOf("Role a"));
-    expect(digest).not.toContain("Role c |");
+    expect(digest.indexOf("Role a")).toBeLessThan(digest.indexOf("Role f"));
+    expect(digest).toContain("fit 75 (-20, posted 222 days ago)");
     expect(digest).not.toContain("fit 20");
-    expect(digest).toContain("Row 6 | 222 days");
+    expect(digest).toContain("Row 8 | applied 14 days ago");
+    expect(freshnessPenalty(50)).toBe(10);
+    expect(freshnessPenalty(10)).toBe(0);
+  });
+
+  it("reports outcomes by verdict, level and source", () => {
+    const now = new Date("2026-10-09T00:00:00Z");
+    expect(buildOutcomeReport([pipelineRow("a", {})], now)).toContain(
+      "no applications recorded yet",
+    );
+    const report = buildOutcomeReport(
+      [
+        pipelineRow("lever:x:1", {
+          applied: true,
+          stage: "Interview",
+          verdict: "apply_now",
+        }),
+        pipelineRow("lever:x:2", {
+          applied: true,
+          stage: "Applied",
+          verdict: "apply_now",
+        }),
+        pipelineRow("ashby:y:3", {
+          stage: "Rejected",
+          verdict: "stretch",
+          flags: "Senior title - above SDE I/II target",
+        }),
+        pipelineRow("ashby:y:4", {}),
+      ],
+      now,
+    );
+    expect(report).toContain(
+      "Outcomes: 3 applied, 2 responses (67%), 1 interviews or offers (33%).",
+    );
+    expect(report).toContain("Fewer than 10 applications");
+    expect(report).toContain("- apply_now: 2 applied, 1 responses (50%)");
+    expect(report).toContain("- senior title: 1 applied, 1 responses (100%)");
+    expect(report).toContain("- lever: 2 applied");
+  });
+
+  it("derives board identifiers from company names", () => {
+    expect(boardSlugCandidates("Hevo Data")).toEqual(["hevodata", "hevo-data"]);
+    expect(boardSlugCandidates("Sarvam AI Pvt Ltd")).toEqual([
+      "sarvamaipvtltd",
+      "sarvam-ai-pvt-ltd",
+      "sarvam",
+    ]);
+    expect(boardSlugCandidates("Ema")).toEqual([]);
   });
 
   it("writes review columns and drafts without touching human columns", async () => {
@@ -114,7 +179,7 @@ describe("job reviews", () => {
     );
     expect(result).toEqual({ applied: 1, unknownIds: ["missing:1"] });
     expect(writes.map((write) => write.range)).toEqual([
-      "'Application Kit'!A1:I1",
+      "'Application Kit'!A1:J1",
       "'Job Pipeline'!X3:AA3",
       "'Application Kit'!A3:I3",
     ]);

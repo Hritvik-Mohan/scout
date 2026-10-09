@@ -16,6 +16,7 @@ export const JOB_APPLICATION_KIT_HEADERS = [
   "Lead With",
   "Outreach Draft (not sent)",
   "Reviewed",
+  "Referral Path",
 ] as const;
 
 const text = (value: unknown): string => {
@@ -63,7 +64,7 @@ export class JobReviewSheetRepository {
     }
     await this.transport.batchUpdateValues([
       {
-        range: `'${JOB_APPLICATION_KIT_SHEET}'!A1:I1`,
+        range: `'${JOB_APPLICATION_KIT_SHEET}'!A1:J1`,
         values: [JOB_APPLICATION_KIT_HEADERS],
       },
     ]);
@@ -121,6 +122,13 @@ export class JobReviewSheetRepository {
           ],
         ],
       });
+      // An absent referral path leaves any earlier research in place.
+      if (review.referralPath !== undefined) {
+        updates.push({
+          range: `'${JOB_APPLICATION_KIT_SHEET}'!J${String(kitRow)}:J${String(kitRow)}`,
+          values: [[review.referralPath]],
+        });
+      }
       applied += 1;
     }
     if (updates.length > 0) await this.transport.batchUpdateValues(updates);

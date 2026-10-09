@@ -26,6 +26,44 @@ roles may be on-site, hybrid, or remote. Roles based elsewhere qualify only when
 the employer can legally engage someone working remotely from India and the
 required working hours are sustainable.
 
+## Resume facts (October 2026 resume)
+
+These are the facts recruiters will check. Application drafts and reviews must
+stay inside them.
+
+- **Timeline:** Software Development Engineer (SDE 1) at Newton School,
+  Bengaluru, since March 2025. Technical Program Manager at Newton School from
+  March 2023 to March 2025, with hands-on building in that role. One month as a
+  volunteer full-stack developer in early 2022.
+- **What "3+ years" means:** 3+ years of hands-on experience across those roles.
+  The SDE title covers the period since March 2025, so postings with a firm "3+
+  years as a software engineer" requirement are a stretch on title tenure, while
+  0-2 and 1-3 year bands are a direct fit.
+- **The simulator:** an Electron and TypeScript desktop simulator for
+  distributed systems and microservice architectures. Routing, load balancing,
+  failure modes, rate limiting, queueing, and million-RPS scenarios are modeled
+  and verified in the simulator. Do not present them as operating a production
+  service at that scale.
+- **Production operations:** Dockerized AWS services made fault-tolerant with
+  health checks and restart policies; CI/CD with Docker, NGINX, GitHub Actions,
+  and AWS (EC2, ECR, CodeBuild).
+- **Team leadership:** led architecture and development of a data aggregation
+  platform with IIT Roorkee, managing a distributed team of 6 (Next.js, Django,
+  Puppeteer, Docker, AWS). This is separate from the simulator.
+- **TPM-era work:** built NS Trinity (React Native app with a Django REST
+  Framework API); code reviewer on two projects; ran 76 technical interviews;
+  created 200+ JavaScript and React coding problems with Cypress end-to-end
+  tests.
+- **Projects:** DeckBattle Arena (real-time multiplayer engine on Node.js,
+  TypeScript, Socket.io, Express, MongoDB); Auction App (Express, EJS).
+- **Languages listed:** TypeScript, JavaScript, Node.js, Java, C++, SQL. C++ is
+  evidenced by the native-addon priority queue. Java has no supporting bullet,
+  and Python is used through Django but is not listed. Go, Kubernetes, and
+  Terraform do not appear.
+- **Education:** BCA (2019-2022), Mahatma Gandhi Kashi Vidyapith University,
+  Varanasi. MCA (online, 2025-2027, in progress), Vellore Institute of
+  Technology.
+
 ## Target roles
 
 ### Tier 1 - strongest fit
@@ -132,7 +170,7 @@ European hours is acceptable if sustainable.
 | Performance engineering        | C++ native-addon priority queue, zero-copy shared memory, batching, ring buffers, and million-RPS analytic simulation        |
 | Cloud and delivery             | AWS EC2, ECR, CodeBuild, Docker, NGINX, GitHub Actions, and CI/CD                                                            |
 | Architecture and communication | 200+ technical specs, ADRs, and design reviews                                                                               |
-| Technical leadership           | Primary engineer; led architecture and development with a distributed team of six                                            |
+| Technical leadership           | Primary engineer on the simulator; separately led a data aggregation platform with a distributed team of six                 |
 | API and product development    | Node.js, Express, Django REST Framework, WebSockets, PostgreSQL, MongoDB, Prisma, React, Next.js, and React Native           |
 | Quality practices              | Conservation-law and Little's Law correctness tests, Cypress E2E tests, code review, and Zod validation                      |
 

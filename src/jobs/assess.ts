@@ -57,6 +57,8 @@ export function assessJob(job: DiscoveredJob): AssessedJob {
     "quality assurance",
     " qa ",
     "support engineer",
+    "l3 support",
+    "sdet",
     "sales engineer",
     "data scientist",
     "product manager",
@@ -78,9 +80,10 @@ export function assessJob(job: DiscoveredJob): AssessedJob {
     "embedded",
     "firmware",
   ]);
-  const higherSdeLevel = /\bsde\s*(?:[-–—/]\s*)?(?:iii|iv|v|3|4|5)\b/iu.test(
-    title,
-  );
+  const higherSdeLevel =
+    /\b(?:sde|engineer|developer)\s*(?:[-–—/]\s*)?(?:iii|iv|v|3|4|5)\b/iu.test(
+      title,
+    );
   const tooSenior =
     higherSdeLevel ||
     includesAny(title, [
@@ -89,6 +92,9 @@ export function assessJob(job: DiscoveredJob): AssessedJob {
       "director",
       "head of",
       "engineering manager",
+      "manager,",
+      "manager -",
+      "manager of",
       "lead engineer",
       "architect",
     ]);

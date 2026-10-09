@@ -53,7 +53,7 @@ for (const target of targets) {
     });
   }
 }
-const sourceRows = await transport.getValues("'Sources'!A2:H200");
+const sourceRows = await transport.getValues("'Sources'!A2:H1000");
 const sourceIndex = sourceRows.findIndex(
   (row) => row[0] === "bangalore-startup-map",
 );
