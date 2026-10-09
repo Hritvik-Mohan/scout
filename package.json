@@ -14,6 +14,12 @@
     "lint": "eslint .",
     "profile:validate": "node dist/commands/validate-profile.js",
     "profile:score": "node dist/commands/score-opportunity.js",
+    "jobs:sheet:create": "npm run build && node --env-file=.env dist/commands/create-job-sheet.js",
+    "jobs:sheet:init": "npm run build && node --env-file=.env dist/commands/initialize-job-sheet.js",
+    "jobs:run": "npm run build && node --env-file=.env dist/commands/run-job-scout.js",
+    "jobs:update": "npm run jobs:run",
+    "jobs:companies": "npm run build && node --env-file=.env dist/commands/run-company-scout.js",
+    "jobs:import:lets-code": "npm run build && node --env-file=.env dist/commands/import-lets-code-workbook.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"

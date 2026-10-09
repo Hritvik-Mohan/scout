@@ -1,0 +1,103 @@
+{
+  "opportunityId": "example-global-remote-backend-sde2",
+  "title": "Software Engineer II, Backend Platform",
+  "sourceUrl": "https://careers.example.com/jobs/backend-platform-sde2",
+  "geography": "Remote (India-compatible)",
+  "criteria": {
+    "role_family_fit": {
+      "matched": true,
+      "rationale": "The position is a hands-on Software Engineer II role on a backend platform team.",
+      "sources": ["https://careers.example.com/jobs/backend-platform-sde2"]
+    },
+    "technical_domain_fit": {
+      "matched": true,
+      "rationale": "The role owns distributed backend services, asynchronous processing, reliability, and observability.",
+      "sources": [
+        "https://careers.example.com/jobs/backend-platform-sde2#responsibilities"
+      ]
+    },
+    "seniority_fit": {
+      "matched": true,
+      "rationale": "The posting asks for three or more years of relevant experience and individual-contributor ownership at Engineer II scope.",
+      "sources": [
+        "https://careers.example.com/jobs/backend-platform-sde2#qualifications"
+      ]
+    },
+    "location_and_authorization_fit": {
+      "matched": true,
+      "rationale": "The employer explicitly hires remote engineers located in India through its employer-of-record and requires four hours of overlap with European working hours.",
+      "sources": [
+        "https://careers.example.com/jobs/backend-platform-sde2#location"
+      ]
+    },
+    "language_and_stack_fit": {
+      "matched": true,
+      "rationale": "The stack includes TypeScript, Node.js, PostgreSQL, AWS, Docker, and event-driven services.",
+      "sources": [
+        "https://careers.example.com/jobs/backend-platform-sde2#stack"
+      ]
+    },
+    "ownership_and_impact": {
+      "matched": true,
+      "rationale": "The engineer owns services from design through deployment and production operation.",
+      "sources": [
+        "https://careers.example.com/jobs/backend-platform-sde2#responsibilities"
+      ]
+    },
+    "engineering_quality": {
+      "matched": true,
+      "rationale": "The description names automated tests, design reviews, tracing, service-level objectives, and CI/CD.",
+      "sources": [
+        "https://careers.example.com/jobs/backend-platform-sde2#engineering"
+      ]
+    },
+    "growth_environment": {
+      "matched": true,
+      "rationale": "The role includes mentorship from senior engineers and progressively broader system-design ownership.",
+      "sources": [
+        "https://careers.example.com/jobs/backend-platform-sde2#growth"
+      ]
+    },
+    "compensation_quality": {
+      "matched": true,
+      "rationale": "The posting publishes a location-adjusted compensation band and benefits for India-based remote employees.",
+      "sources": [
+        "https://careers.example.com/jobs/backend-platform-sde2#compensation"
+      ]
+    }
+  },
+  "signals": {
+    "verified_current_opening": {
+      "matched": true,
+      "rationale": "The role is live on the illustrative employer careers page.",
+      "sources": ["https://careers.example.com/jobs/backend-platform-sde2"]
+    },
+    "preferred_systems_overlap": {
+      "matched": true,
+      "rationale": "The work includes distributed services, message processing, rate limiting, observability, and latency optimization.",
+      "sources": [
+        "https://careers.example.com/jobs/backend-platform-sde2#responsibilities"
+      ]
+    },
+    "preferred_platform_overlap": {
+      "matched": true,
+      "rationale": "The platform uses TypeScript, Node.js, REST APIs, AWS, Docker, and CI/CD.",
+      "sources": [
+        "https://careers.example.com/jobs/backend-platform-sde2#stack"
+      ]
+    },
+    "referral_path": {
+      "matched": true,
+      "rationale": "The illustrative listing identifies the engineering organization and recruiting contact.",
+      "sources": ["https://careers.example.com/jobs/backend-platform-sde2#team"]
+    },
+    "remote_employment_clarity": {
+      "matched": true,
+      "rationale": "The posting states India eligibility, employer-of-record employment, and European timezone overlap.",
+      "sources": [
+        "https://careers.example.com/jobs/backend-platform-sde2#location"
+      ]
+    }
+  },
+  "disqualifiers": []
+}

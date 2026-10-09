@@ -99,4 +99,19 @@ describe("opportunity scoring", () => {
     expect(result.score).toBe(5);
     expect(result.geographyRank).toBe(profile.geographyPriority.length);
   });
+
+  it("marks the representative global-remote SDE 2 role for action", async () => {
+    const profile = scoutProfileSchema.parse(
+      await readJson("profiles/jobs.json"),
+    );
+    const assessment = opportunityAssessmentSchema.parse(
+      await readJson("examples/job-opportunity.json"),
+    );
+
+    expect(scoreOpportunity(profile, assessment)).toMatchObject({
+      score: 5,
+      status: "action",
+      geographyRank: 1,
+    });
+  });
 });
