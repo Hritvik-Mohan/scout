@@ -1,66 +1,122 @@
 {
   "schemaVersion": 1,
-  "id": "jobs_default",
-  "name": "Job Opportunity Scout",
-  "description": "Find open roles that match a candidate's skills, level, location, and compensation needs.",
+  "id": "jobs_hritvik_sde",
+  "name": "Hritvik SDE Opportunity Scout",
+  "description": "Find high-fit SDE 1 and SDE 2 opportunities in Bengaluru and remote roles worldwide that explicitly allow working from India, for a backend-focused engineer with 3+ years of hands-on experience in TypeScript, Node.js, AWS, distributed systems, reliability, and developer tooling.",
   "purpose": "jobs",
-  "targetEntity": "An actively hiring company with a relevant open role",
-  "geographyPriority": ["India", "Remote", "International"],
+  "targetEntity": "An actively hiring product or engineering-led company with a Bengaluru-based role or an India-compatible remote role worldwide, offering an individual-contributor SDE, Software Engineer, Backend Engineer, Distributed Systems Engineer, Platform Engineer, or backend-heavy Product or Full-stack Engineer opening at SDE 1 to SDE 2 scope",
+  "geographyPriority": ["Bengaluru", "Remote (India-compatible)"],
   "criteria": [
     {
-      "id": "role_fit",
-      "label": "Role fit",
-      "description": "The role matches the target function and responsibilities.",
-      "weight": 3,
+      "id": "role_family_fit",
+      "label": "Software engineering role fit",
+      "description": "The opening is a hands-on individual-contributor software engineering role. Primary matches are SDE, SDE 1, SDE 2, Software Engineer I or II, Backend Engineer, Distributed Systems Engineer, Platform Engineer, Infrastructure Software Engineer, or a backend-heavy Product or Full-stack Engineer.",
+      "weight": 4,
       "required": true,
       "evidenceRequired": true
     },
     {
-      "id": "skill_fit",
-      "label": "Skill fit",
-      "description": "The required skills substantially match the candidate's capabilities.",
-      "weight": 3,
+      "id": "technical_domain_fit",
+      "label": "Backend and distributed-systems fit",
+      "description": "The work substantially overlaps with backend services, distributed systems, microservices, request or message routing, load balancing, fault tolerance, observability, performance, networking, APIs, WebSockets, queues, caching, or platform engineering.",
+      "weight": 4,
       "required": true,
       "evidenceRequired": true
     },
     {
       "id": "seniority_fit",
-      "label": "Seniority fit",
-      "description": "The role's experience expectations match the candidate.",
-      "weight": 2,
+      "label": "SDE 1 to SDE 2 seniority fit",
+      "description": "The role is entry-to-mid-level and rewards demonstrated ownership and technical depth. Typical acceptable bands are 2-5 years or equivalent capability. Roles asking for slightly more experience remain eligible when the responsibilities align; staff, principal, architect, and people-manager scope does not.",
+      "weight": 3,
       "required": true,
       "evidenceRequired": true
     },
     {
-      "id": "compensation_fit",
-      "label": "Compensation fit",
-      "description": "Published or credible compensation meets the configured floor.",
+      "id": "location_and_authorization_fit",
+      "label": "Location and authorization fit",
+      "description": "The role is based in Bengaluru (on-site, hybrid, or remote), or is remote from any company location while explicitly accepting candidates working from India through direct employment, an employer-of-record, or a compliant contractor arrangement. Required working hours must be sustainable from India.",
+      "weight": 3,
+      "required": true,
+      "evidenceRequired": true
+    },
+    {
+      "id": "language_and_stack_fit",
+      "label": "Language and stack fit",
+      "description": "The role uses TypeScript, JavaScript, Node.js, Java, C++, SQL, AWS, Docker, PostgreSQL, MongoDB, or a comparable backend stack. TypeScript and Node.js are the strongest immediate fit; Java, C++, Go, or Python roles qualify when they accept transferable systems experience.",
+      "weight": 3,
+      "required": false,
+      "evidenceRequired": true
+    },
+    {
+      "id": "ownership_and_impact",
+      "label": "Meaningful engineering ownership",
+      "description": "The engineer will own production features, services, architecture, performance, reliability, or end-to-end capabilities and can influence technical decisions rather than only execute isolated maintenance tickets.",
+      "weight": 3,
+      "required": false,
+      "evidenceRequired": true
+    },
+    {
+      "id": "engineering_quality",
+      "label": "Engineering quality culture",
+      "description": "The team values automated testing, design reviews, type safety, code review, observability, performance measurement, secure development, or reliable CI/CD practices.",
       "weight": 2,
       "required": false,
       "evidenceRequired": true
     },
     {
-      "id": "location_fit",
-      "label": "Location fit",
-      "description": "Location, remote policy, and working hours are compatible.",
+      "id": "growth_environment",
+      "label": "SDE 2 growth environment",
+      "description": "The role offers mentorship, system-design exposure, increasing service ownership, or a credible path toward broader SDE 2 responsibility without requiring immediate people management.",
       "weight": 2,
-      "required": true,
+      "required": false,
+      "evidenceRequired": true
+    },
+    {
+      "id": "compensation_quality",
+      "label": "Compensation quality",
+      "description": "Published compensation is competitive for the level and location, or credible evidence indicates market-rate engineering pay. Missing compensation is unknown rather than a mismatch until a minimum target is configured.",
+      "weight": 1,
+      "required": false,
       "evidenceRequired": true
     }
   ],
   "signals": [
     {
-      "id": "open_role",
-      "label": "Verified open role",
-      "description": "The role is present on an official or current hiring source.",
+      "id": "verified_current_opening",
+      "label": "Verified current opening",
+      "description": "The role is live on the employer's careers site or another current authoritative hiring source and is not marked filled or closed.",
+      "weight": 3,
+      "required": false,
+      "evidenceRequired": true
+    },
+    {
+      "id": "preferred_systems_overlap",
+      "label": "Preferred systems overlap",
+      "description": "The role explicitly mentions distributed systems, microservices, high availability, fault tolerance, load balancing, consistent hashing, rate limiting, queueing, metrics, tracing, latency, or performance engineering.",
+      "weight": 2,
+      "required": false,
+      "evidenceRequired": true
+    },
+    {
+      "id": "preferred_platform_overlap",
+      "label": "Preferred platform overlap",
+      "description": "The role explicitly mentions TypeScript, Node.js, REST APIs, WebSockets, AWS, Docker, NGINX, CI/CD, developer tools, simulation, or infrastructure software.",
       "weight": 2,
       "required": false,
       "evidenceRequired": true
     },
     {
       "id": "referral_path",
-      "label": "Referral path",
-      "description": "A relevant employee or direct hiring contact is identifiable.",
+      "label": "Referral or hiring-manager path",
+      "description": "A relevant engineer, alumnus, recruiter, founder, or hiring manager can be identified for a targeted referral or direct application follow-up.",
+      "weight": 1,
+      "required": false,
+      "evidenceRequired": true
+    },
+    {
+      "id": "remote_employment_clarity",
+      "label": "Remote employment clarity",
+      "description": "For an international remote role, the listing or employer confirms eligible hiring countries, timezone expectations, and a viable engagement model such as direct employment, employer-of-record, or a compliant full-time contract.",
       "weight": 1,
       "required": false,
       "evidenceRequired": true
@@ -68,32 +124,64 @@
   ],
   "disqualifiers": [
     {
-      "id": "visa_mismatch",
+      "id": "work_authorization_mismatch",
       "label": "Work authorization mismatch",
-      "description": "The role requires unavailable work authorization.",
+      "description": "The employer restricts hiring to a country where the candidate lacks work authorization and offers neither sponsorship nor an India-compatible remote engagement model.",
       "hard": true
     },
     {
-      "id": "compensation_below_floor",
-      "label": "Compensation below floor",
-      "description": "Confirmed compensation is below the configured minimum.",
+      "id": "clearly_too_senior",
+      "label": "Clearly too senior",
+      "description": "The opening requires staff, principal, architect, engineering-manager, or team-lead scope, or makes 7+ years of directly relevant production experience a firm minimum.",
       "hard": true
     },
     {
-      "id": "seniority_mismatch",
-      "label": "Seniority mismatch",
-      "description": "The role is clearly outside the target seniority.",
+      "id": "non_development_role",
+      "label": "Non-development role",
+      "description": "The job is primarily manual QA, technical support, implementation consulting, sales engineering, operations, recruiting, or data entry rather than software development.",
+      "hard": true
+    },
+    {
+      "id": "specialization_mismatch",
+      "label": "Unrelated specialist role",
+      "description": "The opening requires deep specialist experience in frontend-only UI, native mobile, embedded or firmware, kernel development, graphics, security research, quantitative finance, ML research, or data science with no meaningful path from the candidate's backend and systems background.",
+      "hard": true
+    },
+    {
+      "id": "unpaid_or_pay_to_work",
+      "label": "Unpaid or pay-to-work opportunity",
+      "description": "The opportunity is unpaid, charges an application or placement fee, requires purchasing training, or otherwise asks the candidate to pay to obtain the role.",
+      "hard": true
+    },
+    {
+      "id": "unverifiable_or_stale",
+      "label": "Unverifiable or stale opening",
+      "description": "The listing cannot be corroborated through a credible source, has been removed, is explicitly closed, or shows strong signs of being fraudulent or resume harvesting.",
+      "hard": true
+    },
+    {
+      "id": "employment_terms_mismatch",
+      "label": "Employment terms mismatch",
+      "description": "The role has an unacceptable employment bond, commission-only pay, extreme unpaid trial work, or a location or shift requirement incompatible with the candidate's constraints.",
       "hard": true
     }
   ],
-  "thresholds": { "keep": 2.75, "action": 3.75 },
+  "thresholds": {
+    "keep": 2.8,
+    "action": 3.8
+  },
   "outputFields": [
     "role",
     "company",
     "source_url",
+    "date_posted",
     "location",
+    "work_mode",
+    "experience_required",
+    "tech_stack",
     "compensation",
     "contact",
+    "referral_path",
     "score",
     "status",
     "evidence"
