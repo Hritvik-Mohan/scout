@@ -21,6 +21,8 @@
     "jobs:review:pending": "npm run build && node --env-file=.env dist/commands/list-pending-job-reviews.js",
     "jobs:review:apply": "npm run build && node --env-file=.env dist/commands/apply-job-reviews.js",
     "jobs:digest": "npm run build && node --env-file=.env dist/commands/job-digest.js",
+    "jobs:outcomes": "npm run build && node --env-file=.env dist/commands/job-outcomes.js",
+    "jobs:sources:discover": "npm run build && node --env-file=.env dist/commands/discover-job-sources.js",
     "jobs:companies": "npm run build && node --env-file=.env dist/commands/run-company-scout.js",
     "jobs:import:lets-code": "npm run build && node --env-file=.env dist/commands/import-lets-code-workbook.js",
     "test": "vitest run",

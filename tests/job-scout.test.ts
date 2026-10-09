@@ -514,6 +514,25 @@ describe("deterministic job assessment", () => {
   });
 });
 
+describe("job assessment level and role filters", () => {
+  it.each([
+    ["Software Development Engineer III | Backend", "clearly_too_senior"],
+    ["Sr.Manager, Software Engineering", "clearly_too_senior"],
+    ["Senior SDET - Backend Platform", "non_development_role"],
+  ])("rejects %s", (title, disqualifier) => {
+    expect(assessJob({ ...job(), title }).assessment.disqualifiers).toContain(
+      disqualifier,
+    );
+  });
+
+  it("keeps a Software Engineer 2 title", () => {
+    expect(
+      assessJob({ ...job(), title: "Software Engineer 2, Backend" }).assessment
+        .disqualifiers,
+    ).toEqual([]);
+  });
+});
+
 describe("job pipeline Sheet repository", () => {
   it("inserts a new role and verifies the automated fields", async () => {
     const writes: { range: string; values: readonly (readonly unknown[])[] }[] =
@@ -564,23 +583,36 @@ describe("job pipeline Sheet repository", () => {
   });
 
   it("flags kept roles that differ from the SDE I/II target", () => {
+    const flagsNow = new Date("2026-10-09T00:00:00Z");
+    expect(
+      jobFlags(
+        { ...job(), title: "SDE II" },
+        "",
+        new Date("2026-12-09T00:00:00Z"),
+      ),
+    ).toEqual(["Posted over 45 days ago - confirm still open"]);
     expect(
       jobFlags(
         { ...job(), title: "Senior Software Engineer" },
         "5+ years stated",
+        flagsNow,
       ),
     ).toEqual([
       "Senior title - above SDE I/II target",
       "Asks 5+ years - stretch",
     ]);
     expect(
-      jobFlags({ ...job(), title: "Software Engineer - Winter Intern" }, ""),
+      jobFlags(
+        { ...job(), title: "Software Engineer - Winter Intern" },
+        "",
+        flagsNow,
+      ),
     ).toEqual(["Internship"]);
-    expect(jobFlags({ ...job(), title: "Data Engineer (SDE 2)" }, "")).toEqual([
-      "Data/ML-focused role",
-    ]);
-    expect(jobFlags({ ...job(), title: "SDE II" }, "3+ years stated")).toEqual(
-      [],
-    );
+    expect(
+      jobFlags({ ...job(), title: "Data Engineer (SDE 2)" }, "", flagsNow),
+    ).toEqual(["Data/ML-focused role"]);
+    expect(
+      jobFlags({ ...job(), title: "SDE II" }, "3+ years stated", flagsNow),
+    ).toEqual([]);
   });
 });

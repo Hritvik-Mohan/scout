@@ -115,8 +115,39 @@ reasons and gaps, resume evidence to lead with, and an outreach draft.
 
 `jobs:review:apply` writes `Fit`, `Verdict`, `Fit Summary`, and `Reviewed` to
 Job Pipeline columns X:AA and the drafts to the `Application Kit` tab. Drafts
-are never sent. `jobs:digest` lists the top open roles by fit and postings old
-enough to need a freshness check.
+are never sent. A review may also carry a `referralPath`: public, sourced routes
+to a referral, written to the kit's `Referral Path` column. It never contains a
+guessed contact.
+
+`jobs:digest` ranks open roles by fit less a penalty for postings older than 45
+days, lists applications that have had no recorded response for a week, and ends
+with the outcome summary. Postings older than 45 days are also marked in the
+`Flags` column.
+
+## Track outcomes
+
+Tick `Applied`, set `Application Date`, and keep `Stage` current in Job
+Pipeline. Then run:
+
+```bash
+npm run jobs:outcomes
+```
+
+It reports applications, responses, and interviews or offers, grouped by review
+verdict, level, and source, so the search can be retuned on evidence. Applied
+roles are never pruned.
+
+## Find more company boards
+
+```bash
+npm run jobs:sources:discover
+```
+
+Scout derives likely board identifiers from each name in the `Companies` tab and
+probes the public Greenhouse, Lever, and Ashby feeds. A board is added to
+`Sources` only when it has at least one role the profile would keep and the
+posting text names the company. Probe results are remembered in
+`.local/board-probe.json`; `SCOUT_BOARD_PROBE_LIMIT` bounds each run.
 
 ## Discover and enrich Bengaluru companies
 

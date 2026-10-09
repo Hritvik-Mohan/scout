@@ -1,7 +1,7 @@
 import { GoogleAuthAccessTokenProvider } from "../integrations/google-auth.js";
 import { GoogleSheetsRestTransport } from "../integrations/google-sheets.js";
 import { JobReviewSheetRepository } from "../jobs/review-sheet.js";
-import { buildJobDigest } from "../jobs/review.js";
+import { buildJobDigest, buildOutcomeReport } from "../jobs/review.js";
 
 const spreadsheetId = process.env.SCOUT_JOB_SHEET_ID?.trim();
 if (spreadsheetId === undefined || spreadsheetId === "") {
@@ -13,6 +13,8 @@ const repository = new JobReviewSheetRepository(
     tokenProvider: new GoogleAuthAccessTokenProvider(),
   }),
 );
+const rows = await repository.pipelineRows();
+const now = new Date();
 process.stdout.write(
-  `${buildJobDigest(await repository.pipelineRows(), { now: new Date() })}\n`,
+  `${buildJobDigest(rows, { now })}\n\n${buildOutcomeReport(rows, now)}\n`,
 );
