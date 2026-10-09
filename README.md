@@ -65,6 +65,14 @@ This initializes and verifies the same four tabs while keeping the workbook
 owned by the personal account. Subsequent Scout reads and updates continue to
 use the service-account credentials.
 
+## Run without a local key file
+
+Hosted environments have no `.env` and no key file. Set `SCOUT_JOB_SHEET_ID` and
+`GOOGLE_SERVICE_ACCOUNT_JSON` (the service-account JSON, raw or base64) as
+secret environment variables instead. The npm scripts load `.env` only when it
+exists, and inline credentials take precedence over
+`GOOGLE_APPLICATION_CREDENTIALS`.
+
 ## Discover and score remote jobs
 
 Search all currently automated sources again and update the live pipeline with:
