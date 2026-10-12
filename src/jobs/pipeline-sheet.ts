@@ -52,6 +52,9 @@ const workMode = (job: DiscoveredJob): string => {
     : "On-site / hybrid - verify";
 };
 
+export const MISSING_FLAG = "Not found on the employer's board";
+export const CLOSED_FLAG = "Closed - no longer on the employer's board";
+
 export class JobPipelineSheetRepository {
   private pipelineRows: Promise<unknown[][]> | undefined;
   private companyContacts:
@@ -155,6 +158,11 @@ export class JobPipelineSheetRepository {
           range: `'Job Pipeline'!R${String(rowNumber)}:V${String(rowNumber)}`,
           values: [newHuman],
         });
+        // Date Added is written once, when the role first enters the pipeline.
+        updates.push({
+          range: `'Job Pipeline'!AB${String(rowNumber)}:AB${String(rowNumber)}`,
+          values: [[now.toISOString().slice(0, 10)]],
+        });
       }
       const duplicate = rows.find(
         (row) =>
@@ -221,13 +229,81 @@ export class JobPipelineSheetRepository {
       if (applied || (stage !== "" && stage !== "Discovered")) continue;
       const rowNumber = rowIndex + 2;
       updates.push({
-        range: `'Job Pipeline'!A${String(rowNumber)}:AA${String(rowNumber)}`,
-        values: [Array.from({ length: 27 }, () => "")],
+        range: `'Job Pipeline'!A${String(rowNumber)}:AB${String(rowNumber)}`,
+        values: [Array.from({ length: 28 }, () => "")],
       });
       rows[rowIndex] = [];
     }
     if (updates.length > 0) await this.transport.batchUpdateValues(updates);
     return updates.length;
+  }
+
+  /**
+   * Handles roles that have vanished from their employer's board. The first
+   * miss only flags the row, so one short feed response cannot delete a role.
+   * A second miss removes an untracked row and marks a tracked one closed.
+   */
+  async reconcileMissing(
+    completePrefixes: readonly string[],
+    seenIds: ReadonlySet<string>,
+    now: Date = new Date(),
+  ): Promise<{
+    flagged: number;
+    closed: number;
+    removed: readonly string[];
+  }> {
+    const rows = await this.loadPipelineRows();
+    const today = now.toISOString().slice(0, 10);
+    const updates: SheetValueUpdate[] = [];
+    const removed: string[] = [];
+    let flagged = 0;
+    let closed = 0;
+    rows.forEach((row, rowIndex) => {
+      const id = text(row[0]).trim();
+      if (
+        id === "" ||
+        seenIds.has(id) ||
+        !completePrefixes.some((prefix) => id.startsWith(prefix))
+      ) {
+        return;
+      }
+      const rowNumber = rowIndex + 2;
+      const flags = text(row[22]);
+      if (flags.includes(CLOSED_FLAG)) return;
+      const setFlags = (value: string): void => {
+        updates.push({
+          range: `'Job Pipeline'!W${String(rowNumber)}:W${String(rowNumber)}`,
+          values: [[value]],
+        });
+        row[22] = value;
+      };
+      const kept = flags
+        .split("; ")
+        .filter((flag) => flag !== "" && !flag.startsWith(MISSING_FLAG));
+      if (!flags.includes(MISSING_FLAG)) {
+        setFlags(
+          [...kept, `${MISSING_FLAG} on ${today} - may be closed`].join("; "),
+        );
+        flagged += 1;
+        return;
+      }
+      const applied =
+        row[17] === true || text(row[17]).toLowerCase() === "true";
+      const stage = text(row[19]);
+      if (applied || (stage !== "" && stage !== "Discovered")) {
+        setFlags([...kept, `${CLOSED_FLAG} (confirmed ${today})`].join("; "));
+        closed += 1;
+        return;
+      }
+      updates.push({
+        range: `'Job Pipeline'!A${String(rowNumber)}:AB${String(rowNumber)}`,
+        values: [Array.from({ length: 28 }, () => "")],
+      });
+      rows[rowIndex] = [];
+      removed.push(id);
+    });
+    if (updates.length > 0) await this.transport.batchUpdateValues(updates);
+    return { flagged, closed, removed };
   }
 
   async removeIfUntracked(opportunityId: string): Promise<boolean> {

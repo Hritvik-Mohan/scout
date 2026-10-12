@@ -59,6 +59,7 @@ export function assessJob(job: DiscoveredJob): AssessedJob {
     "support engineer",
     "l3 support",
     "sdet",
+    "engineer in test",
     "sales engineer",
     "data scientist",
     "product manager",

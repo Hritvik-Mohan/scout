@@ -36,6 +36,7 @@ export const JOB_PIPELINE_HEADERS = [
   "Verdict",
   "Fit Summary",
   "Reviewed",
+  "Date Added",
 ] as const;
 
 export const JOB_SOURCE_HEADERS = [
@@ -389,7 +390,7 @@ export async function createJobSearchWorkbook(
     ["Action threshold", options.profile.thresholds.action],
   ];
   await api.batchUpdateValues(spreadsheetId, [
-    { range: `'${JOB_PIPELINE_SHEET}'!A1:AA1`, values: [JOB_PIPELINE_HEADERS] },
+    { range: `'${JOB_PIPELINE_SHEET}'!A1:AB1`, values: [JOB_PIPELINE_HEADERS] },
     {
       range: `'${JOB_SOURCES_SHEET}'!A1:H${String(JOB_SOURCE_ROWS.length + 1)}`,
       values: [JOB_SOURCE_HEADERS, ...JOB_SOURCE_ROWS],
@@ -412,7 +413,7 @@ export async function createJobSearchWorkbook(
   const companiesId = requiredSheetId(ids, JOB_COMPANIES_SHEET);
   const widths = [
     130, 230, 180, 260, 105, 170, 115, 150, 145, 145, 220, 150, 180, 180, 80,
-    90, 300, 80, 115, 120, 180, 280, 260, 60, 100, 360, 110,
+    90, 300, 80, 115, 120, 180, 280, 260, 60, 100, 360, 110, 110,
   ];
   await api.batchUpdateSpreadsheet(spreadsheetId, [
     headerFormat(pipelineId, JOB_PIPELINE_HEADERS.length),
@@ -530,7 +531,7 @@ export async function createJobSearchWorkbook(
 
   await api.shareSpreadsheet(spreadsheetId, options.shareWith);
   const [pipeline, sources, runs, profile, companies] = await Promise.all([
-    api.getValues(spreadsheetId, `'${JOB_PIPELINE_SHEET}'!A1:AA1`),
+    api.getValues(spreadsheetId, `'${JOB_PIPELINE_SHEET}'!A1:AB1`),
     api.getValues(spreadsheetId, `'${JOB_SOURCES_SHEET}'!A1:H1`),
     api.getValues(spreadsheetId, `'${JOB_RUNS_SHEET}'!A1:H1`),
     api.getValues(spreadsheetId, `'${JOB_PROFILE_SHEET}'!A1:B1`),
