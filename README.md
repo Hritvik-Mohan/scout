@@ -31,14 +31,22 @@ your own columns (Applied, Application Date, Stage, Next Action, Notes) alone.
 ## Quick start
 
 You need Node.js 22.9 or newer, a Google account, and
-[Claude Code](https://claude.com/claude-code). Fork the repository so your
-profile stays yours, clone it, and open the folder in Claude Code:
+[Claude Code](https://claude.com/claude-code). Fork
+[Hritvik-Mohan/scout](https://github.com/Hritvik-Mohan/scout) so your profile
+stays yours, clone your fork, switch to the
+[latest release](https://github.com/Hritvik-Mohan/scout/releases/latest), and
+open the folder in Claude Code:
 
 ```bash
 git clone https://github.com/<you>/scout.git
 cd scout
+git checkout -b my-search "$(git describe --tags --abbrev=0)"
 claude
 ```
+
+That starts you on a branch of your own at the newest released version, rather
+than on unreleased work. [Versions and upgrading](#versions-and-upgrading)
+explains how to move to a newer release later.
 
 Then paste this prompt. It does the whole setup with you. The only steps it
 cannot do for you are creating the Google key and sharing the sheet, and it
@@ -150,11 +158,13 @@ These are the steps the quick-start prompt performs, for doing them yourself.
 
 ### 1. Get the code
 
-Fork the repository so your profile stays yours, then:
+Fork [Hritvik-Mohan/scout](https://github.com/Hritvik-Mohan/scout) so your
+profile stays yours, then start a branch of your own at the latest release:
 
 ```bash
 git clone https://github.com/<you>/scout.git
 cd scout
+git checkout -b my-search "$(git describe --tags --abbrev=0)"
 npm ci
 cp .env.example .env
 ```
@@ -226,7 +236,8 @@ in the sheet.
 `jobs:sheet:init` fills the **Sources** tab with a starter list aimed at
 Bengaluru. Edit that tab for your market:
 
-- Untick **Active** on boards you do not want.
+- Untick **Active** on boards you do not want. Do not delete starter rows;
+  re-running `jobs:sheet:init` would add them back.
 - Add a row for each company board you do want. Scout can poll these types:
 
   | Type              | URL to enter                                                 |
@@ -450,6 +461,81 @@ npm run build
 npm run profile:validate -- profiles/freelance.json
 npm run profile:score -- profiles/freelance.json examples/freelance-opportunity.json
 ```
+
+## Versions and upgrading
+
+Scout is published as numbered
+[releases](https://github.com/Hritvik-Mohan/scout/releases). Each release is a
+tested state of `main`; `main` itself may contain unreleased work. The version
+has three parts, `major.minor.patch`:
+
+| Part  | Raised when                                  | What you do                  |
+| ----- | -------------------------------------------- | ---------------------------- |
+| patch | A bug is fixed                               | Upgrade when convenient      |
+| minor | A feature is added; your setup keeps working | Upgrade to get the feature   |
+| major | You must change something to keep working    | Read the release notes first |
+
+A major release is one that changes your sheet's columns, the shape of
+`profiles/job-search.json` or `profiles/jobs.json`, or the name of an
+environment variable. Its notes say what to change.
+
+### Upgrade your fork
+
+Your three personal files (`docs/job-search-icp.md`, `profiles/job-search.json`,
+`profiles/jobs.json`) live at the same paths as the owner's, so an upgrade can
+report conflicts in them. Always keep yours.
+
+```bash
+git remote add upstream https://github.com/Hritvik-Mohan/scout.git   # once
+git fetch upstream --tags
+git merge v0.3.0                      # the release you are moving to
+```
+
+If the merge stops on a conflict in those three files, keep your versions and
+finish:
+
+```bash
+git checkout --ours docs/job-search-icp.md profiles/job-search.json profiles/jobs.json
+git add docs/job-search-icp.md profiles/job-search.json profiles/jobs.json
+git commit
+```
+
+Then confirm your setup still works:
+
+```bash
+npm ci
+npm run jobs:config:check
+npm run jobs:update
+```
+
+If you run a cloud routine, push the upgraded branch to the branch the routine
+reads. If a release adds sheet columns, run `npm run jobs:sheet:init` once to
+add the new headers. It does not change your pipeline rows, but it re-adds any
+starter sources you deleted from the Sources tab, so untick **Active** on
+unwanted sources instead of deleting them.
+
+### Publish a release (maintainers)
+
+1. Merge the work into `main` and wait for CI to pass.
+2. Raise the version, which also commits and tags it:
+
+   ```bash
+   git checkout main && git pull && npm version minor   # or patch, or major
+   ```
+
+3. Push the commit and the tag:
+
+   ```bash
+   git push origin main --follow-tags
+   ```
+
+4. Publish, with notes generated from the merged pull requests:
+
+   ```bash
+   gh release create "v$(node -p "require('./package.json').version")" --generate-notes
+   ```
+
+For a major release, edit the notes to list exactly what users must change.
 
 ## Safety
 
