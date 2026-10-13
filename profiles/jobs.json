@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "id": "jobs_hritvik_sde",
-  "name": "Hritvik SDE Opportunity Scout",
-  "description": "Find high-fit SDE 1 and SDE 2 opportunities in Bengaluru and remote roles worldwide that explicitly allow working from India, for a backend-focused engineer with 3+ years of hands-on experience in TypeScript, Node.js, AWS, distributed systems, reliability, and developer tooling.",
+  "id": "jobs_backend_engineer",
+  "name": "Backend Engineer Opportunity Scout",
+  "description": "Starter jobs profile: early-to-mid-level backend and platform software engineering roles in Bengaluru, or remote roles that explicitly allow working from India. Copy it to my-search/jobs.json and adapt it.",
   "purpose": "jobs",
   "targetEntity": "An actively hiring product or engineering-led company with a Bengaluru-based role or an India-compatible remote role worldwide, offering an individual-contributor SDE, Software Engineer, Backend Engineer, Distributed Systems Engineer, Platform Engineer, or backend-heavy Product or Full-stack Engineer opening at SDE 1 to SDE 2 scope",
   "geographyPriority": ["Bengaluru", "Remote (India-compatible)"],

@@ -21,6 +21,7 @@ import {
   parseConfiguredJobSources,
 } from "../src/jobs/sources.js";
 import type { GoogleSheetsTransport } from "../src/integrations/google-sheets.js";
+import { requireSearchFile, searchPaths } from "../src/jobs/search-paths.js";
 import { loadScoutProfile } from "../src/profiles/loader.js";
 import { scoreOpportunity } from "../src/profiles/scorer.js";
 import { scoutProfileSchema } from "../src/profiles/schema.js";
@@ -580,13 +581,25 @@ describe("job search configuration", () => {
     ).toContain("specialization_mismatch");
   });
 
-  it("rejects unknown keys and keeps the shipped file in step", async () => {
+  it("rejects unknown keys", () => {
     expect(
       jobSearchConfigSchema.safeParse({ ...dataSearch, city: "Pune" }).success,
     ).toBe(false);
-    await expect(
-      loadJobSearchConfig("profiles/job-search.json"),
-    ).resolves.toEqual(DEFAULT_JOB_SEARCH);
+  });
+
+  it("defaults to the ignored my-search folder and honours overrides", async () => {
+    expect(searchPaths({}).profile.endsWith("my-search/jobs.json")).toBe(true);
+    expect(searchPaths({}).icp.endsWith("my-search/job-search-icp.md")).toBe(
+      true,
+    );
+    expect(
+      searchPaths({
+        SCOUT_JOB_SEARCH_PATH: "examples/john-doe/job-search.json",
+      }).search.endsWith("examples/john-doe/job-search.json"),
+    ).toBe(true);
+    await expect(requireSearchFile("my-search/missing.json")).rejects.toThrow(
+      /cp -R examples\/john-doe my-search/u,
+    );
   });
 });
 
