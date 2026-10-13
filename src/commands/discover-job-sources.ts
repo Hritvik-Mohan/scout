@@ -7,6 +7,7 @@ import {
   detectCompanyBoards,
   type DetectedBoard,
 } from "../jobs/board-detection.js";
+import { loadJobSearchConfig } from "../jobs/search-config.js";
 import { loadScoutProfile } from "../profiles/loader.js";
 
 interface ProbeRecord {
@@ -38,6 +39,9 @@ const probeLimit = positiveInteger(process.env.SCOUT_BOARD_PROBE_LIMIT, 150);
 const concurrency = 6;
 const profile = await loadScoutProfile(
   resolve(process.env.SCOUT_PROFILE_PATH ?? "profiles/jobs.json"),
+);
+const search = await loadJobSearchConfig(
+  resolve(process.env.SCOUT_JOB_SEARCH_PATH ?? "profiles/job-search.json"),
 );
 const transport = new GoogleSheetsRestTransport({
   spreadsheetId,
@@ -81,7 +85,13 @@ await Promise.all(
       if (target === undefined) return;
       cache.set(target.name.toLowerCase(), {
         probedAt: now.toISOString(),
-        boards: await detectCompanyBoards(target.name, profile, request),
+        boards: await detectCompanyBoards(
+          target.name,
+          profile,
+          request,
+          fetch,
+          search,
+        ),
       });
     }
   }),
@@ -111,7 +121,7 @@ for (const company of companies) {
       company.name,
       board.type,
       board.url,
-      "Bengaluru + Remote (India-compatible)",
+      `${search.primaryLocationLabel} + ${search.remoteLabel}`,
       true,
       "",
       `Auto-detected from the Companies tab on ${now.toISOString().slice(0, 10)} with ${String(board.keptRoles)} matching role(s). Board identifier was inferred from the company name; confirm it is the right employer.`,

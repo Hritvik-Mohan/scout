@@ -3,6 +3,7 @@ import type { ScoutProfile } from "../profiles/schema.js";
 import { scoreOpportunity } from "../profiles/scorer.js";
 import { assessJob } from "./assess.js";
 import type { JobSearchRequest } from "./model.js";
+import { DEFAULT_JOB_SEARCH, type JobSearchConfig } from "./search-config.js";
 import {
   createJobDiscoveryAdapter,
   type ConfiguredJobSource,
@@ -61,6 +62,7 @@ export async function detectCompanyBoards(
   profile: ScoutProfile,
   request: JobSearchRequest,
   fetchImpl: FetchLike = fetch,
+  search: JobSearchConfig = DEFAULT_JOB_SEARCH,
 ): Promise<readonly DetectedBoard[]> {
   // Compare on letters and digits only so "Hevo Data" matches "HevoData.com".
   const compact = (value: string): string =>
@@ -85,11 +87,12 @@ export async function detectCompanyBoards(
         const jobs = await createJobDiscoveryAdapter(
           source,
           fetchImpl,
+          search,
         ).discover(request);
         const kept = jobs.filter((job) => {
           const status = scoreOpportunity(
             profile,
-            assessJob(job).assessment,
+            assessJob(job, search).assessment,
           ).status;
           return status === "keep" || status === "action";
         });

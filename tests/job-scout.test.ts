@@ -5,6 +5,12 @@ import { AshbyJobDiscoveryAdapter } from "../src/jobs/ashby.js";
 import { assessJob } from "../src/jobs/assess.js";
 import { jobFlags } from "../src/jobs/flags.js";
 import { GreenhouseJobDiscoveryAdapter } from "../src/jobs/greenhouse.js";
+import {
+  DEFAULT_JOB_SEARCH,
+  jobSearchConfigSchema,
+  loadJobSearchConfig,
+  type JobSearchConfig,
+} from "../src/jobs/search-config.js";
 import { LeverJobDiscoveryAdapter } from "../src/jobs/lever.js";
 import type { DiscoveredJob } from "../src/jobs/model.js";
 import { JobPipelineSheetRepository } from "../src/jobs/pipeline-sheet.js";
@@ -15,6 +21,7 @@ import {
   parseConfiguredJobSources,
 } from "../src/jobs/sources.js";
 import type { GoogleSheetsTransport } from "../src/integrations/google-sheets.js";
+import { loadScoutProfile } from "../src/profiles/loader.js";
 import { scoreOpportunity } from "../src/profiles/scorer.js";
 import { scoutProfileSchema } from "../src/profiles/schema.js";
 
@@ -511,6 +518,75 @@ describe("deterministic job assessment", () => {
     expect(remoteIndia.assessment.disqualifiers).not.toContain(
       "work_authorization_mismatch",
     );
+  });
+});
+
+describe("job search configuration", () => {
+  const dataSearch: JobSearchConfig = {
+    ...DEFAULT_JOB_SEARCH,
+    roleTitles: ["data analyst"],
+    technicalTerms: ["sql", "tableau", "python"],
+    primaryLocations: ["pune"],
+    primaryLocationLabel: "Pune",
+    maxLevel: 3,
+  };
+  const analyst = {
+    ...job(),
+    title: "Data Analyst III",
+    candidateLocation: "Pune, India",
+    description: "Build SQL and Tableau dashboards. Minimum 3 years.",
+    tags: [],
+  };
+
+  it("assesses a different role, stack and city from config alone", () => {
+    const assessed = assessJob(analyst, dataSearch).assessment;
+    expect(assessed.disqualifiers).toEqual([]);
+    expect(assessed.geography).toBe("Pune");
+    expect(assessed.criteria.role_family_fit?.matched).toBe(true);
+    expect(assessed.criteria.technical_domain_fit?.matched).toBe(true);
+  });
+
+  it("rejects the same posting under the default search", () => {
+    const assessed = assessJob(analyst).assessment;
+    expect(assessed.criteria.role_family_fit?.matched).toBe(false);
+  });
+
+  it("ships a consistent fictional example for another search", async () => {
+    const john = await loadJobSearchConfig("examples/john-doe/job-search.json");
+    const johnProfile = await loadScoutProfile("examples/john-doe/jobs.json");
+    expect(johnProfile.geographyPriority).toEqual(
+      expect.arrayContaining([john.primaryLocationLabel, john.remoteLabel]),
+    );
+    const frontend = assessJob(
+      {
+        ...job(),
+        provider: "Greenhouse: Example",
+        title: "Frontend Engineer",
+        candidateLocation: "London, United Kingdom",
+        description:
+          "Own and build React and TypeScript components in our design system. Accessibility, performance, Playwright tests and code review matter here. 3+ years.",
+        tags: [],
+      },
+      john,
+    );
+    expect(frontend.assessment.disqualifiers).toEqual([]);
+    expect(frontend.assessment.geography).toBe("London");
+    expect(scoreOpportunity(johnProfile, frontend.assessment).status).not.toBe(
+      "reject",
+    );
+    expect(
+      assessJob({ ...job(), title: "Backend Engineer" }, john).assessment
+        .disqualifiers,
+    ).toContain("specialization_mismatch");
+  });
+
+  it("rejects unknown keys and keeps the shipped file in step", async () => {
+    expect(
+      jobSearchConfigSchema.safeParse({ ...dataSearch, city: "Pune" }).success,
+    ).toBe(false);
+    await expect(
+      loadJobSearchConfig("profiles/job-search.json"),
+    ).resolves.toEqual(DEFAULT_JOB_SEARCH);
   });
 });
 

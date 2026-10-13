@@ -6,6 +6,7 @@ import type {
   JobDiscoveryAdapter,
   JobSearchRequest,
 } from "./model.js";
+import { DEFAULT_JOB_SEARCH, type JobSearchConfig } from "./search-config.js";
 import { stripMarkup } from "./text.js";
 
 const greenhouseJobSchema = z
@@ -34,40 +35,19 @@ const includesAny = (value: string, terms: readonly string[]): boolean =>
 
 const isPotentialCandidate = (
   job: z.infer<typeof greenhouseJobSchema>,
-): boolean => {
-  const title = job.title.toLowerCase();
-  const location = job.location.name.toLowerCase();
-  return (
-    includesAny(title, [
-      "software engineer",
-      "software developer",
-      "sde",
-      "backend",
-      "back-end",
-      "platform engineer",
-      "infrastructure engineer",
-      "distributed systems",
-      "product engineer",
-      "full stack",
-      "full-stack",
-      "api engineer",
-      "developer tools",
-    ]) &&
-    includesAny(location, [
-      "worldwide",
-      "anywhere",
-      "global",
-      "india",
-      "bengaluru",
-      "bangalore",
-    ])
-  );
-};
+  search: JobSearchConfig,
+): boolean =>
+  includesAny(job.title.toLowerCase(), search.roleTitles) &&
+  includesAny(job.location.name.toLowerCase(), [
+    ...search.remoteEligibleTerms,
+    ...search.primaryLocations,
+  ]);
 
 export interface GreenhouseAdapterOptions {
   boardToken: string;
   company: string;
   fetch?: FetchLike;
+  search?: JobSearchConfig;
 }
 
 export class GreenhouseJobDiscoveryAdapter implements JobDiscoveryAdapter {
@@ -75,11 +55,13 @@ export class GreenhouseJobDiscoveryAdapter implements JobDiscoveryAdapter {
   private readonly boardToken: string;
   private readonly company: string;
   private readonly fetchImpl: FetchLike;
+  private readonly search: JobSearchConfig;
 
   constructor(options: GreenhouseAdapterOptions) {
     this.boardToken = options.boardToken.trim();
     this.company = options.company.trim();
     this.fetchImpl = options.fetch ?? fetch;
+    this.search = options.search ?? DEFAULT_JOB_SEARCH;
     if (this.boardToken === "" || this.company === "") {
       throw new Error("Greenhouse board token and company are required");
     }
@@ -100,7 +82,7 @@ export class GreenhouseJobDiscoveryAdapter implements JobDiscoveryAdapter {
     );
     const parsed = greenhouseResponseSchema.parse(JSON.parse(body) as unknown);
     const candidates = parsed.jobs
-      .filter(isPotentialCandidate)
+      .filter((job) => isPotentialCandidate(job, this.search))
       .slice(0, request.maxResults);
     const detailedJobs = await Promise.all(
       candidates.map(async (job) => {
