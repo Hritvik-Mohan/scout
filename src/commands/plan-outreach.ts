@@ -1,7 +1,10 @@
 import { GoogleAuthAccessTokenProvider } from "../integrations/google-auth.js";
 import { GoogleSheetsRestTransport } from "../integrations/google-sheets.js";
 import { loadOutreachPlan } from "../jobs/outreach-sheet.js";
-import { formatOutreachPlan, outreachCapArgument } from "../jobs/outreach.js";
+import {
+  formatOutreachPlan,
+  outreachLimitArguments,
+} from "../jobs/outreach.js";
 
 const spreadsheetId = process.env.SCOUT_JOB_SHEET_ID?.trim();
 if (spreadsheetId === undefined || spreadsheetId === "") {
@@ -12,6 +15,6 @@ const plan = await loadOutreachPlan(
     spreadsheetId,
     tokenProvider: new GoogleAuthAccessTokenProvider(),
   }),
-  { now: new Date(), cap: outreachCapArgument(process.argv) },
+  { now: new Date(), ...outreachLimitArguments(process.argv) },
 );
 process.stdout.write(`${formatOutreachPlan(plan)}\n`);

@@ -6,6 +6,7 @@ import {
   buildOutreachDrafts,
   buildOutreachFollowUps,
   buildOutreachPlan,
+  outreachLimitArguments,
   createdOutreachDraftsSchema,
   formatOutreachPlan,
   outreachRows,
@@ -222,7 +223,9 @@ describe("outreach plan", () => {
       ["Typed Twice", "Already handled on row 10"],
     ]);
     const output = formatOutreachPlan(plan);
-    expect(output).toContain("0 sent today, daily cap 20, 3 in today's batch");
+    expect(output).toContain(
+      "0 sent today, daily cap 20 (4 per company), 3 in today's batch",
+    );
     expect(output).toContain(
       "- Row 3 | Acme One (Recruiter) | one@acme.example | Acme - Role b | fit 90 (apply_now)",
     );
@@ -252,6 +255,50 @@ describe("outreach plan", () => {
         cap: 1,
       }).batch,
     ).toEqual([]);
+  });
+});
+
+describe("outreach per-company cap", () => {
+  it("spreads the batch across companies, counting what was sent today", () => {
+    const rows = [
+      sheetRow("Sent", "Acme Inc", "sent@acme.example", {
+        status: "Sent",
+        contactedOn: "2026-10-13",
+      }),
+      ...Array.from({ length: 4 }, (_, index) =>
+        sheetRow("Acme", "Acme", `a${String(index)}@acme.example`),
+      ),
+      sheetRow("Beta", "Beta", "b0@beta.example"),
+      sheetRow("Beta", "Beta", "b1@beta.example"),
+    ];
+    const plan = buildOutreachPlan(rows, entries, {
+      today: "2026-10-13",
+      perCompany: 2,
+    });
+    // Acme has one sent today, so one more fits; Beta fits two.
+    expect(plan.batch.map(({ row }) => row.rowNumber)).toEqual([3, 7, 8]);
+    expect(plan.deferred).toBe(3);
+    expect(
+      buildOutreachPlan(rows, entries, { today: "2026-10-13" }).batch,
+    ).toHaveLength(5);
+    expect(
+      buildOutreachPlan(rows, entries, { today: "2026-10-13", perCompany: 0 })
+        .batch,
+    ).toEqual([]);
+  });
+
+  it("reads both limits from the command line", () => {
+    expect(outreachLimitArguments(["node", "plan"])).toEqual({
+      cap: 20,
+      perCompany: 4,
+    });
+    expect(outreachLimitArguments(["--cap=10", "--per-company=2"])).toEqual({
+      cap: 10,
+      perCompany: 2,
+    });
+    expect(() => outreachLimitArguments(["--per-company=x"])).toThrow(
+      "--per-company must be a whole number",
+    );
   });
 });
 

@@ -4,7 +4,10 @@ import { dirname, resolve } from "node:path";
 import { GoogleAuthAccessTokenProvider } from "../integrations/google-auth.js";
 import { GoogleSheetsRestTransport } from "../integrations/google-sheets.js";
 import { loadOutreachPlan } from "../jobs/outreach-sheet.js";
-import { buildOutreachDrafts, outreachCapArgument } from "../jobs/outreach.js";
+import {
+  buildOutreachDrafts,
+  outreachLimitArguments,
+} from "../jobs/outreach.js";
 import { JobReviewSheetRepository } from "../jobs/review-sheet.js";
 
 const spreadsheetId = process.env.SCOUT_JOB_SHEET_ID?.trim();
@@ -17,7 +20,7 @@ const transport = new GoogleSheetsRestTransport({
 });
 const plan = await loadOutreachPlan(transport, {
   now: new Date(),
-  cap: outreachCapArgument(process.argv),
+  ...outreachLimitArguments(process.argv),
 });
 const result = buildOutreachDrafts(
   plan,
