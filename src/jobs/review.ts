@@ -137,7 +137,10 @@ export function buildJobDigest(
   const followUpDays = options.followUpDays ?? 7;
   const entries = pipelineEntries(rows, options.now);
   const open = entries.filter(
-    (entry) => !entry.applied && entry.stage !== "Withdrawn",
+    (entry) =>
+      !entry.applied &&
+      entry.stage !== "Withdrawn" &&
+      !entry.flags.includes("Closed -"),
   );
   const queue = open
     .filter((entry) => entry.fit !== null && entry.verdict !== "skip")

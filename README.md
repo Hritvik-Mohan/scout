@@ -132,6 +132,15 @@ days, lists applications that have had no recorded response for a week, and ends
 with the outcome summary. Postings older than 45 days are also marked in the
 `Flags` column.
 
+## Closed postings
+
+Greenhouse, Lever, and Ashby feeds list every open role, so `jobs:update` treats
+a role missing from a complete feed as closing. The first miss adds a "Not found
+on the employer's board" flag. On the next miss the row is removed, along with
+its Application Kit drafts, unless you have applied or moved its stage; those
+rows stay and are flagged "Closed". A role that reappears is restored to normal
+on the next run.
+
 ## Track outcomes
 
 Tick `Applied`, set `Application Date`, and keep `Stage` current in Job

@@ -70,6 +70,26 @@ export class JobReviewSheetRepository {
     ]);
   }
 
+  /** Clears Application Kit rows for roles removed from the pipeline. */
+  async removeDrafts(opportunityIds: readonly string[]): Promise<number> {
+    if (opportunityIds.length === 0) return 0;
+    const kit = await this.transport
+      .getValues(`'${JOB_APPLICATION_KIT_SHEET}'!A2:A1000`)
+      .catch(() => []);
+    const updates = kit.flatMap((row, index) =>
+      opportunityIds.includes(text(row[0]).trim())
+        ? [
+            {
+              range: `'${JOB_APPLICATION_KIT_SHEET}'!A${String(index + 2)}:J${String(index + 2)}`,
+              values: [Array.from({ length: 10 }, () => "")],
+            },
+          ]
+        : [],
+    );
+    if (updates.length > 0) await this.transport.batchUpdateValues(updates);
+    return updates.length;
+  }
+
   /**
    * Writes review columns X:AA on matching Job Pipeline rows and upserts the
    * drafts into Application Kit. Human columns R:V are never written.
@@ -103,8 +123,11 @@ export class JobReviewSheetRepository {
       const kitIndex = kitIds.indexOf(review.id);
       let kitRow = kitIndex + 2;
       if (kitIndex < 0) {
-        kitIds.push(review.id);
-        kitRow = kitIds.length + 1;
+        // Reuse a row cleared by removeDrafts before appending.
+        const blank = kitIds.indexOf("");
+        if (blank < 0) kitIds.push(review.id);
+        else kitIds[blank] = review.id;
+        kitRow = (blank < 0 ? kitIds.length - 1 : blank) + 2;
       }
       updates.push({
         range: `'${JOB_APPLICATION_KIT_SHEET}'!A${String(kitRow)}:I${String(kitRow)}`,

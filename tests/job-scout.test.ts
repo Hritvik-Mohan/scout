@@ -519,6 +519,7 @@ describe("job assessment level and role filters", () => {
     ["Software Development Engineer III | Backend", "clearly_too_senior"],
     ["Sr.Manager, Software Engineering", "clearly_too_senior"],
     ["Senior SDET - Backend Platform", "non_development_role"],
+    ["Senior Software Engineer in Test", "non_development_role"],
   ])("rejects %s", (title, disqualifier) => {
     expect(assessJob({ ...job(), title }).assessment.disqualifiers).toContain(
       disqualifier,
@@ -576,10 +577,13 @@ describe("job pipeline Sheet repository", () => {
         score,
       }),
     ).resolves.toBe("inserted");
-    expect(writes).toHaveLength(3);
-    expect(writes[0]?.range).toBe("'Job Pipeline'!A2:Q2");
-    expect(writes[1]?.range).toBe("'Job Pipeline'!R2:V2");
-    expect(writes[2]?.range).toBe("'Job Pipeline'!W2:W2");
+    expect(writes.map((write) => write.range)).toEqual([
+      "'Job Pipeline'!A2:Q2",
+      "'Job Pipeline'!R2:V2",
+      "'Job Pipeline'!AB2:AB2",
+      "'Job Pipeline'!W2:W2",
+    ]);
+    expect(writes[2]?.values[0]?.[0]).toMatch(/^\d{4}-\d{2}-\d{2}$/u);
   });
 
   it("flags kept roles that differ from the SDE I/II target", () => {
@@ -614,5 +618,69 @@ describe("job pipeline Sheet repository", () => {
     expect(
       jobFlags({ ...job(), title: "SDE II" }, "3+ years stated", flagsNow),
     ).toEqual([]);
+  });
+
+  it("flags a missing role first, then removes or closes it", async () => {
+    const row = (id: string, applied: boolean, flags: string): unknown[] => {
+      const cells: unknown[] = Array.from({ length: 23 }, () => "");
+      cells[0] = id;
+      cells[17] = applied;
+      cells[19] = applied ? "Applied" : "Discovered";
+      cells[22] = flags;
+      return cells;
+    };
+    const missed =
+      "Not found on the employer's board on 2026-10-11 - may be closed";
+    const writes: { range: string; values: readonly (readonly unknown[])[] }[] =
+      [];
+    const transport: GoogleSheetsTransport = {
+      getValues: () =>
+        Promise.resolve([
+          row("lever:acme:open", false, ""),
+          row("lever:acme:first-miss", false, "Internship"),
+          row("lever:acme:second-miss", false, missed),
+          row("lever:acme:applied", true, `Internship; ${missed}`),
+          row("ashby:other:1", false, ""),
+        ]),
+      batchUpdateValues: (updates) => {
+        writes.push(...updates);
+        return Promise.resolve();
+      },
+      appendValues: () => Promise.resolve(),
+    };
+    const outcome = await new JobPipelineSheetRepository(
+      transport,
+    ).reconcileMissing(
+      ["lever:acme:"],
+      new Set(["lever:acme:open"]),
+      new Date("2026-10-12T04:00:00Z"),
+    );
+    expect(outcome).toEqual({
+      flagged: 1,
+      closed: 1,
+      removed: ["lever:acme:second-miss"],
+    });
+    expect(writes).toEqual([
+      {
+        range: "'Job Pipeline'!W3:W3",
+        values: [
+          [
+            "Internship; Not found on the employer's board on 2026-10-12 - may be closed",
+          ],
+        ],
+      },
+      {
+        range: "'Job Pipeline'!A4:AB4",
+        values: [Array.from({ length: 28 }, () => "")],
+      },
+      {
+        range: "'Job Pipeline'!W5:W5",
+        values: [
+          [
+            "Internship; Closed - no longer on the employer's board (confirmed 2026-10-12)",
+          ],
+        ],
+      },
+    ]);
   });
 });

@@ -66,6 +66,27 @@ const requiredSegmentAfter = (url: URL, segment: string): string => {
   return decodeURIComponent(value);
 };
 
+/**
+ * The opportunity-ID prefix for roles from a source whose feed lists every open
+ * posting, or null when a role's absence from the feed proves nothing (Remotive
+ * is a rolling feed; SmartRecruiters returns one filtered page).
+ */
+export function completeFeedIdPrefix(
+  source: ConfiguredJobSource,
+): string | null {
+  const url = new URL(source.url);
+  if (source.type === "greenhouse") {
+    return `greenhouse:${requiredSegmentAfter(url, "boards")}:`;
+  }
+  if (source.type === "lever") {
+    return `lever:${requiredSegmentAfter(url, "postings")}:`;
+  }
+  if (source.type === "ashby") {
+    return `ashby:${requiredSegmentAfter(url, "job-board")}:`;
+  }
+  return null;
+}
+
 export function createJobDiscoveryAdapter(
   source: ConfiguredJobSource,
   fetchImpl: FetchLike = fetch,

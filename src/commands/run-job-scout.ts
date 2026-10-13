@@ -14,9 +14,11 @@ import {
   type JobPipelineWrite,
 } from "../jobs/pipeline-sheet.js";
 import {
+  completeFeedIdPrefix,
   createJobDiscoveryAdapter,
   parseConfiguredJobSources,
 } from "../jobs/sources.js";
+import { JobReviewSheetRepository } from "../jobs/review-sheet.js";
 import { loadScoutProfile } from "../profiles/loader.js";
 import { scoreOpportunity } from "../profiles/scorer.js";
 
@@ -72,11 +74,17 @@ const failures: string[] = [];
 const discoveredJobs: DiscoveredJob[] = [];
 const checkedAt = new Date().toISOString();
 const checkedUpdates: SheetValueUpdate[] = [];
+// Sources whose feed came back whole, so a missing role means it has closed.
+const completePrefixes: string[] = [];
 for (const [index, result] of discoveryResults.entries()) {
   const source = sources[index];
   if (source === undefined) continue;
   if (result.status === "fulfilled") {
     discoveredJobs.push(...result.value.jobs);
+    const prefix = completeFeedIdPrefix(source);
+    if (prefix !== null && result.value.jobs.length < maxResults) {
+      completePrefixes.push(prefix);
+    }
     checkedUpdates.push({
       range: `'Sources'!G${String(source.rowNumber)}:G${String(source.rowNumber)}`,
       values: [[checkedAt]],
@@ -111,6 +119,12 @@ for (const job of jobs) {
 }
 const kept = writes.length;
 const pruned = await repository.removeManyIfUntracked(rejectedIds);
+const missing = await repository.reconcileMissing(
+  completePrefixes,
+  new Set(jobs.map((job) => job.id)),
+  startedAt,
+);
+await new JobReviewSheetRepository(transport).removeDrafts(missing.removed);
 const { inserted, updated } = await repository.upsertMany(writes, startedAt);
 // Kept postings are cached locally so the review step can read full
 // descriptions without polling every source again.
@@ -137,6 +151,6 @@ await repository.appendRun({
   error: failures.length === 0 ? null : failures.join(" | "),
 });
 process.stdout.write(
-  `${JSON.stringify({ runId, status, sources: sources.length, sourceFailures: failures, discovered: jobs.length, kept, action, inserted, updated, pruned, finishedAt: finishedAt.toISOString() }, null, 2)}\n`,
+  `${JSON.stringify({ runId, status, sources: sources.length, sourceFailures: failures, discovered: jobs.length, kept, action, inserted, updated, pruned, notOnBoard: missing.flagged, closed: missing.closed, removedClosed: missing.removed.length, finishedAt: finishedAt.toISOString() }, null, 2)}\n`,
 );
 if (status === "failed") process.exitCode = 1;
