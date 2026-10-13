@@ -57,7 +57,8 @@ export interface JobDigestOptions {
 const RESPONDED_STAGES = new Set(["Interview", "Offer", "Rejected"]);
 const POSITIVE_STAGES = new Set(["Interview", "Offer"]);
 
-interface PipelineEntry {
+export interface PipelineEntry {
+  id: string;
   rowNumber: number;
   role: string;
   company: string;
@@ -73,7 +74,7 @@ interface PipelineEntry {
 }
 
 // Sheets returns dates as serial numbers when the cell is date-formatted.
-const parseSheetDate = (value: unknown): number => {
+export const parseSheetDate = (value: unknown): number => {
   if (typeof value === "number") {
     return Date.UTC(1899, 11, 30) + value * 86_400_000;
   }
@@ -88,7 +89,7 @@ const daysSince = (value: unknown, now: Date): number | null => {
 };
 
 /** Row positions follow JOB_PIPELINE_HEADERS (A2:AA). */
-const pipelineEntries = (
+export const pipelineEntries = (
   rows: readonly (readonly unknown[])[],
   now: Date,
 ): PipelineEntry[] =>
@@ -98,6 +99,7 @@ const pipelineEntries = (
     const stage = text(row[19]).trim();
     return [
       {
+        id,
         rowNumber: index + 2,
         role: text(row[1]),
         company: text(row[2]),
