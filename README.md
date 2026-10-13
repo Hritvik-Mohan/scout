@@ -78,17 +78,26 @@ Set up this Scout repository for my own job search. Read README.md first.
    keeping the criterion ids unchanged.
 5. Run `npm run jobs:config:check` and fix what it reports. Run
    `npm run check`.
-6. Walk me through the README's "Create a Google service-account key" and
+6. Back up my search in a private repository. my-search/ is ignored by this
+   repository's Git, so make it a repository of its own. Check that the GitHub
+   CLI works (`gh auth status`). Ask me to confirm the name, defaulting to
+   <my GitHub username>/scout-search. Then, inside my-search/, run `git init`,
+   commit the files, and run
+   `gh repo create <name> --private --source=. --remote=origin --push`.
+   Confirm the new repository is private and tell me its URL. Never create it
+   as public. If `gh` is missing or not signed in, show me the manual steps
+   from the README's "Keep your search in a private repository" and continue.
+7. Walk me through the README's "Create a Google service-account key" and
    "Create the sheet" steps one at a time, and wait while I do each. I will put
    the key path and sheet ID in .env myself. Never ask me to paste the key.
-7. Run `npm run jobs:sheet:init`. Then help me fix the Sources tab for my
+8. Run `npm run jobs:sheet:init`. Then help me fix the Sources tab for my
    market: deactivate boards that do not fit, and add public Greenhouse, Lever,
    Ashby or SmartRecruiters boards for companies I name.
-8. Run `npm run jobs:update` and report sources checked, failures, and roles
+9. Run `npm run jobs:update` and report sources checked, failures, and roles
    discovered, kept, inserted and pruned.
-9. Run `npm run jobs:review:pending`, review each pending role against my ICP
+10. Run `npm run jobs:review:pending`, review each pending role against my ICP
    following the README's "Review rules", and apply the reviews.
-10. Show me `npm run jobs:digest`, explain how to record an application in the
+11. Show me `npm run jobs:digest`, explain how to record an application in the
     sheet, and offer to schedule the refresh as described under "Schedule it".
 
 Never submit an application, contact anyone, or invent a contact detail.
@@ -118,6 +127,32 @@ cp -R examples/john-doe my-search
 [How to write your ICP](#how-to-write-your-icp) explains the third file. To keep
 the files somewhere else, set `SCOUT_JOB_SEARCH_PATH`, `SCOUT_PROFILE_PATH`, and
 `SCOUT_ICP_PATH`.
+
+### Keep your search in a private repository
+
+`my-search/` is ignored by Scout's Git, so on its own it exists only on your
+computer. Make the folder a private repository of its own. That backs it up,
+keeps its history, and lets a cloud routine read it without your profile ever
+entering a public repository.
+
+```bash
+cd my-search
+git init -b main
+git add -A
+git commit -m "Add my Scout search files"
+gh repo create <you>/scout-search --private --source=. --remote=origin --push
+cd ..
+```
+
+Without the GitHub CLI, create an empty **private** repository on github.com,
+then run `git remote add origin <its URL>` and `git push -u origin main` inside
+`my-search/`. After editing your files, commit and push there.
+
+On another computer, clone it back into place:
+
+```bash
+git clone https://github.com/<you>/scout-search.git my-search
+```
 
 ### `my-search/job-search.json`
 
@@ -336,10 +371,10 @@ Scout reaches Google Sheets with the service-account key, not through a Claude
 connector, so you do not need a Google connector in Claude. What each option
 needs:
 
-| Where it runs                 | Needs                                                                 |
-| ----------------------------- | --------------------------------------------------------------------- |
-| Claude desktop scheduled task | The app open on a computer that has this folder and its `.env`        |
-| Claude cloud routine          | Your GitHub account connected to Claude, plus two environment secrets |
+| Where it runs                 | Needs                                                             |
+| ----------------------------- | ----------------------------------------------------------------- |
+| Claude desktop scheduled task | The app open on a computer that has this folder and its `.env`    |
+| Claude cloud routine          | GitHub connected to Claude, your private search repo, two secrets |
 
 Scout needs no GitHub repository secrets. The included CI workflow only runs
 `npm run check`, which never touches the sheet. The two secrets for a cloud
@@ -358,7 +393,8 @@ A cloud routine runs on Anthropic's servers whether or not your computer is on.
 It clones your repository each time, so it has no `.env` and no key file.
 
 1. On <https://claude.ai/code>, connect your GitHub account and give the Claude
-   GitHub app access to your Scout repository.
+   GitHub app access to your Scout repository and your private `scout-search`
+   repository.
 2. In your cloud environment's settings, add two environment variables:
    - `SCOUT_JOB_SHEET_ID`: your sheet ID.
    - `GOOGLE_SERVICE_ACCOUNT_JSON`: the key file's contents on one line. Copy it
@@ -368,14 +404,17 @@ It clones your repository each time, so it has no `.env` and no key file.
      base64 -i ~/.config/scout/service-account.json | tr -d '\n' | pbcopy
      ```
 
-3. Ask Claude Code to "create a cloud routine" with the prompt below, your
-   repository, and your schedule. Tell it to attach no connectors.
+3. Ask Claude Code to "create a cloud routine" with the prompt below, both
+   repositories (your Scout fork and your private `scout-search`), and your
+   schedule. Tell it to attach no connectors.
 4. Run it once and read the result before relying on it.
 
-A cloud run only sees what is in your repository, and `my-search/` is ignored by
-Git. To use a cloud routine, keep your fork **private** and remove the
-`my-search/` line from its `.gitignore` so your three files are committed there.
-Do not do this in a public repository.
+A cloud run only sees what is on GitHub, and `my-search/` is not in the Scout
+repository. Give the routine both repositories: your Scout fork and your private
+`scout-search` repository from
+[Keep your search in a private repository](#keep-your-search-in-a-private-repository).
+The Claude GitHub app needs access to both. They are cloned side by side, and
+the refresh prompt copies your files into `my-search/` at the start of each run.
 
 Merge changes to your default branch before expecting a cloud run to use them.
 
@@ -387,8 +426,12 @@ my-search/job-search-icp.md. Work in the repository root.
 
 Setup: run `npm ci` if node_modules is missing. If there is no .env file, check
 that SCOUT_JOB_SHEET_ID and GOOGLE_SERVICE_ACCOUNT_JSON are set, without
-printing them; if either is missing, stop and say which. If the my-search
-folder is missing, stop and say so.
+printing them; if either is missing, stop and say which.
+
+If the my-search folder is missing, look for a scout-search directory next to
+this repository (cloud runs clone it there) and copy job-search-icp.md,
+job-search.json and jobs.json from it into my-search. If neither exists, stop
+and say so. Never commit or publish anything from my-search or scout-search.
 
 Read my-search/job-search-icp.md, especially "Resume facts". It is the only source
 of truth about the candidate. The roles, cities and remote regions to target
