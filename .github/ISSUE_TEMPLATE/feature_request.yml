@@ -1,0 +1,51 @@
+name: Feature request
+description: Suggest an improvement or a new job-board source
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description:
+        The job-search problem this would solve. Start with the outcome, not the
+        solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like Scout to do?
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - New job board or source
+        - Matching and scoring
+        - Review, ranking, or drafts
+        - Google Sheet layout
+        - Scheduling or Claude Code setup
+        - Documentation
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: For a new source
+      description:
+        The provider's name and a link to its public job feed or API
+        documentation, if you know it.
+  - type: checkboxes
+    id: rules
+    attributes:
+      label: Fit with the project
+      options:
+        - label:
+            This does not require Scout to apply, send messages, or contact
+            anyone on a user's behalf
+          required: true
+        - label: I am willing to open a pull request for this

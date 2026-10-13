@@ -1,0 +1,70 @@
+name: Bug report
+description: Something in Scout does not work as documented
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before pasting any output, remove anything private: sheet IDs, key contents, email addresses, and your own profile.
+        For a leaked credential or a security problem, do not open an issue. Follow SECURITY.md instead.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: command
+    attributes:
+      label: Command
+      description: The command you ran.
+      placeholder: npm run jobs:update
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description:
+        The error message or relevant output, with private details removed.
+      render: shell
+  - type: input
+    id: version
+    attributes:
+      label: Scout version
+      description: Run `npm pkg get version`.
+      placeholder: 0.3.0
+    validations:
+      required: true
+  - type: input
+    id: node
+    attributes:
+      label: Node.js version
+      description: Run `node --version`.
+      placeholder: v22.9.0
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where does it run?
+      options:
+        - On my computer, from a terminal
+        - Claude Code on my computer
+        - Claude desktop scheduled task
+        - Claude cloud routine
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label:
+            I removed sheet IDs, keys, and personal details from this report
+          required: true
+        - label:
+            "`npm run jobs:config:check` reports no problems, or the bug is in
+            that command"
