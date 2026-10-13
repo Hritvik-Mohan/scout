@@ -475,7 +475,7 @@ Add contacts in either of two ways:
   once to create the tab.
 - Import a CSV with `npm run jobs:outreach:import -- <file.csv>`. The columns
   are `name`, `company`, `email` and `source_url`, plus optional `title`,
-  `opportunity_id` and `notes`;
+  `opportunity_id`, `notes` and `greeting`;
   [`examples/outreach-contacts.csv`](examples/outreach-contacts.csv) shows the
   layout. Keep your own file in `.local/`, which Git ignores.
 
@@ -537,7 +537,10 @@ and nothing is sent.
 1. `npm run jobs:outreach:drafts` writes `.local/outreach/drafts.json`, one
    entry per contact in the batch: `to`, `subject`, `body` and the tab row. The
    body is the **Outreach Draft (not sent)** written for the contact's role in
-   Application Kit, with the contact's **Name** in place of `[name]`.
+   Application Kit, with the contact's **Greeting** in place of `[name]`. Set
+   **Greeting** to how you would address the person, such as "Asha" for Asha
+   Rao; when it is blank the full **Name** is used, which suits a shared inbox
+   such as "Acme hiring team".
 2. Claude creates one Gmail draft per entry, then writes
    `.local/outreach/created.json` listing each draft it made as
    `{ "rowNumber": 2, "to": "careers@acme.example" }`.

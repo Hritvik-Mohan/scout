@@ -59,6 +59,7 @@ const sheetRow = (
     status?: string;
     contactedOn?: unknown;
     draftCreated?: string;
+    greeting?: string;
   } = {},
 ): unknown[] => [
   name,
@@ -73,6 +74,7 @@ const sheetRow = (
   "",
   "2026-10-10",
   options.draftCreated ?? "",
+  options.greeting ?? "",
 ];
 
 describe("outreach contacts CSV", () => {
@@ -96,6 +98,7 @@ describe("outreach contacts CSV", () => {
         sourceUrl: "https://acme.example/careers",
         opportunityId: "",
         notes: "",
+        greeting: "",
       },
     ]);
     expect(rejected.map((entry) => entry.line)).toEqual([3, 4, 5]);
@@ -126,8 +129,8 @@ describe("outreach import", () => {
   it("skips duplicates and do-not-contact addresses", () => {
     const { contacts } = parseOutreachCsv(
       [
-        "name,company,email,source_url",
-        "New One,Acme,new@example.com,https://acme.example/a",
+        "name,company,email,source_url,greeting",
+        "New One,Acme,new@example.com,https://acme.example/a,New",
         "New Again,Acme,NEW@example.com,https://acme.example/a",
         "Known,Acme,known@example.com,https://acme.example/a",
         "Blocked,Acme,blocked@example.com,https://acme.example/a",
@@ -161,6 +164,8 @@ describe("outreach import", () => {
         "",
         "",
         "2026-10-13",
+        "",
+        "New",
       ],
       [
         "Nowhere",
@@ -174,6 +179,8 @@ describe("outreach import", () => {
         "",
         "",
         "2026-10-13",
+        "",
+        "",
       ],
     ]);
   });
@@ -263,6 +270,9 @@ describe("outreach drafts", () => {
           draftCreated: "2026-10-12",
         }),
         sheetRow("Beta One", "Beta", "one@beta.example"),
+        sheetRow("Vikram Shah", "Acme", "vikram@acme.example", {
+          greeting: "Vikram",
+        }),
       ],
       entries,
       { today: "2026-10-13" },
@@ -274,7 +284,7 @@ describe("outreach drafts", () => {
       ),
       kitRow("f", ""),
     ]);
-    expect(result.drafts).toEqual([
+    expect(result.drafts.slice(0, 1)).toEqual([
       {
         rowNumber: 2,
         to: "asha@acme.example",
@@ -287,6 +297,10 @@ describe("outreach drafts", () => {
       },
     ]);
     expect(result.alreadyDrafted).toBe(1);
+    expect(result.drafts[1]).toMatchObject({
+      name: "Vikram Shah",
+      body: "Hello Vikram,\nI built a routing engine. Vikram, shall we talk?",
+    });
     expect(result.missing.map(({ row }) => row.name)).toEqual(["Beta One"]);
     expect(formatOutreachPlan(plan)).toContain(
       "drafted@acme.example | Acme - Role b | fit 90 (apply_now) | draft ready",
@@ -430,6 +444,6 @@ describe("outreach sheet", () => {
     expect(JSON.stringify(requests[1])).toContain(
       '"sheetId":7,"startRowIndex":1,"endRowIndex":1000,"startColumnIndex":7',
     );
-    expect(writes).toEqual(["'Outreach'!A1:L1", "'Outreach'!A:L +1"]);
+    expect(writes).toEqual(["'Outreach'!A1:M1", "'Outreach'!A:M +1"]);
   });
 });
