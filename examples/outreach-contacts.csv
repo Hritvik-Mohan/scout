@@ -1,3 +1,3 @@
-name,title,company,email,source_url,opportunity_id,notes
-Asha Rao,Talent Partner,Example Labs,careers@examplelabs.example,https://examplelabs.example/careers,,Listed as the hiring contact on the careers page
-Vikram Shah,Recruiter,Northwind Systems,vikram.shah@northwind.example,https://northwind.example/jobs/backend-engineer,greenhouse:northwind:4821,Named in the posting
+name,title,company,email,source_url,opportunity_id,notes,greeting
+Asha Rao,Talent Partner,Example Labs,careers@examplelabs.example,https://examplelabs.example/careers,,Listed as the hiring contact on the careers page,Asha
+Vikram Shah,Recruiter,Northwind Systems,vikram.shah@northwind.example,https://northwind.example/jobs/backend-engineer,greenhouse:northwind:4821,Named in the posting,Vikram

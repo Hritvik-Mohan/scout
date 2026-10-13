@@ -78,14 +78,14 @@ export class JobOutreachSheetRepository {
     }
     await this.transport.batchUpdateValues([
       {
-        range: `'${JOB_OUTREACH_SHEET}'!A1:L1`,
+        range: `'${JOB_OUTREACH_SHEET}'!A1:M1`,
         values: [JOB_OUTREACH_HEADERS],
       },
     ]);
   }
 
   rows(): Promise<readonly (readonly unknown[])[]> {
-    return this.transport.getValues(`'${JOB_OUTREACH_SHEET}'!A2:L1000`);
+    return this.transport.getValues(`'${JOB_OUTREACH_SHEET}'!A2:M1000`);
   }
 
   /** Outreach rows for read-only reports, or none when the tab is missing. */
@@ -95,7 +95,7 @@ export class JobOutreachSheetRepository {
 
   async appendContacts(rows: readonly (readonly string[])[]): Promise<void> {
     if (rows.length === 0) return;
-    await this.transport.appendValues(`'${JOB_OUTREACH_SHEET}'!A:L`, rows);
+    await this.transport.appendValues(`'${JOB_OUTREACH_SHEET}'!A:M`, rows);
   }
 
   /**

@@ -27,6 +27,7 @@ export const JOB_OUTREACH_HEADERS = [
   "Notes",
   "Date Added",
   "Draft Created",
+  "Greeting",
 ] as const;
 
 export const OUTREACH_STATUSES = [
@@ -62,6 +63,8 @@ export const outreachContactSchema = z
     sourceUrl: sourceUrlSchema,
     opportunityId: z.string().trim().default(""),
     notes: z.string().trim().default(""),
+    // How a draft addresses the contact, such as a first name.
+    greeting: z.string().trim().default(""),
   })
   .strict();
 
@@ -81,6 +84,7 @@ const CSV_COLUMNS: Readonly<Record<string, keyof OutreachContact>> = {
   emailsourceurl: "sourceUrl",
   opportunityid: "opportunityId",
   notes: "notes",
+  greeting: "greeting",
 };
 
 const REQUIRED_CSV_FIELDS = ["name", "company", "email", "sourceUrl"] as const;
@@ -136,12 +140,13 @@ export interface OutreachRow {
   status: string;
   contactedOn: unknown;
   draftCreated: string;
+  greeting: string;
 }
 
 const text = (value: unknown): string =>
   typeof value === "string" || typeof value === "number" ? String(value) : "";
 
-/** Row positions follow JOB_OUTREACH_HEADERS (A2:L). */
+/** Row positions follow JOB_OUTREACH_HEADERS (A2:M). */
 export const outreachRows = (
   rows: readonly (readonly unknown[])[],
 ): OutreachRow[] =>
@@ -161,6 +166,7 @@ export const outreachRows = (
         status: text(row[7]).trim(),
         contactedOn: row[8],
         draftCreated: text(row[11]).trim(),
+        greeting: text(row[12]).trim(),
       },
     ];
   });
@@ -252,6 +258,8 @@ export function planOutreachImport(
       "",
       contact.notes,
       addedOn,
+      "",
+      contact.greeting,
     ]);
   }
   return { rows, duplicates, doNotContact, unlinked };
@@ -413,7 +421,8 @@ export interface OutreachDrafts {
 
 /**
  * Turns today's batch into draft emails, using the outreach draft written for
- * each contact's role during review with the contact's name filled in.
+ * each contact's role during review. `[name]` becomes the contact's Greeting,
+ * or the full Name when no greeting is set.
  * `kitRows` are Application Kit rows (A2:H).
  */
 export function buildOutreachDrafts(
@@ -445,7 +454,10 @@ export function buildOutreachDrafts(
       opportunityId: role.id,
       role: role.role,
       subject: `${role.role} role at ${role.company}`,
-      body: template.replaceAll(/\[name\]/giu, row.name),
+      body: template.replaceAll(
+        /\[name\]/giu,
+        row.greeting === "" ? row.name : row.greeting,
+      ),
     });
   }
   return { drafts, alreadyDrafted, missing };
