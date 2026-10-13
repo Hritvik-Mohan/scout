@@ -29,6 +29,46 @@ A Google Sheet with these tabs:
 Each refresh updates the pipeline, removes postings that have closed, and leaves
 your own columns (Applied, Application Date, Stage, Next Action, Notes) alone.
 
+**Job Pipeline** ranks every open role and flags what differs from your target:
+
+![Job Pipeline tab with roles ranked by fit, verdicts, flags, application status and date added](docs/images/sheet-job-pipeline.png)
+
+**Application Kit** holds what you need to apply to each role:
+
+![Application Kit tab with resume evidence, an outreach draft and a referral path per role](docs/images/sheet-application-kit.png)
+
+Both images are illustrations with fictional data from the John Doe example, not
+a real person's sheet. They show a selection of the columns.
+
+## How it fits together
+
+```mermaid
+flowchart LR
+    boards["Public job boards<br/>Greenhouse, Lever, Ashby,<br/>SmartRecruiters, Remotive"]
+    search["my-search/ (private repo)<br/>ICP, matching terms,<br/>scoring profile"]
+    sched["Scheduler<br/>desktop task or<br/>cloud routine"]
+    update["jobs:update<br/>poll, filter, score, flag,<br/>remove closed postings"]
+    sheet[("Your Google Sheet<br/>Job Pipeline, Application Kit,<br/>Sources, Runs, Companies")]
+    review["Claude Code review<br/>reads each new posting<br/>against your ICP"]
+    digest["jobs:digest<br/>apply next, follow-ups,<br/>outcomes"]
+    you(["You<br/>apply and record status"])
+
+    boards -- "open roles" --> update
+    search -- "titles, stack, locations" --> update
+    sched -. "twice a day" .-> update
+    update -- "kept roles and flags" --> sheet
+    sheet -- "unreviewed roles" --> review
+    search -- "resume facts" --> review
+    review -- "fit, verdict, drafts,<br/>referral path" --> sheet
+    sheet --> digest
+    digest -- "ranked list" --> you
+    you -- "Applied, Stage, Notes" --> sheet
+```
+
+Scout reaches the sheet with a Google service-account key. Claude does the one
+step code cannot: reading a posting against your real experience. Nothing in the
+loop applies, sends a message, or contacts anyone.
+
 ## Quick start
 
 You need Node.js 22.9 or newer, a Google account, and
@@ -146,7 +186,17 @@ cd ..
 
 Without the GitHub CLI, create an empty **private** repository on github.com,
 then run `git remote add origin <its URL>` and `git push -u origin main` inside
-`my-search/`. After editing your files, commit and push there.
+`my-search/`.
+
+After editing your files, send them to the private repository with one command:
+
+```bash
+npm run jobs:search:sync
+```
+
+It commits any changes in `my-search/` and pushes them. Cloud runs read the
+pushed version, so `npm run jobs:update` warns you when your local files are
+ahead of it.
 
 On another computer, clone it back into place:
 
@@ -341,6 +391,7 @@ Update the ICP whenever your resume changes, then re-run the review with
 | `npm run jobs:outcomes`                       | Print responses and interviews by verdict, level, and source    |
 | `npm run jobs:sources:discover`               | Probe employers in the Companies tab for job boards             |
 | `npm run jobs:config:check`                   | Validate the three files in `my-search/`                        |
+| `npm run jobs:search:sync`                    | Commit and push `my-search/` to your private repository         |
 | `npm run check`                               | Format, lint, typecheck, test, and build                        |
 
 When you apply to a role, tick **Applied**, set **Application Date**, and keep
@@ -362,6 +413,49 @@ posting against your ICP, written by Claude or by you as JSON matching
 - `referralPath`: for `apply_now` roles, what the posting and the employer's
   official pages say about the team and referral rules, plus a people-search
   link for you to run. It never lists individual employees or guesses a contact.
+
+## Set up Claude Code
+
+Claude Code is the assistant that runs the setup prompt, reviews roles against
+your ICP, and runs the refresh on a schedule. It comes as a desktop app, a
+terminal command, and a web app at <https://claude.ai/code>; install it from
+<https://claude.com/claude-code> and sign in.
+
+| You want to                         | Use                                            |
+| ----------------------------------- | ---------------------------------------------- |
+| Run the setup prompt                | Desktop app or terminal, opened in this folder |
+| Review roles and see the digest     | Desktop app or terminal, opened in this folder |
+| Refresh on a schedule, computer on  | Desktop app scheduled task                     |
+| Refresh on a schedule, computer off | Cloud routine at <https://claude.ai/code>      |
+
+To start a session in the terminal, run `claude` inside the repository folder.
+In the desktop app, open the Code tab and choose the folder. The first time
+Claude runs a command it asks for permission; approve the `npm run` commands
+Scout uses.
+
+### Cloud environment
+
+A cloud routine runs in a cloud environment, which holds its settings. Create
+one at <https://claude.ai/code> from the environment picker, with **Add
+environment**:
+
+<img src="docs/images/claude-cloud-environment.png" alt="The Add cloud environment dialog in Claude Code, with fields for name, network access, network secrets, setup script and environment variables" width="420">
+
+| Field                 | What to enter                                                                                                   |
+| --------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Name                  | Any name, such as `scout`                                                                                       |
+| Network access        | A level that allows the job-board APIs and Google Sheets. If runs report blocked requests, widen it             |
+| Network secrets       | Leave empty. Scout's code must read the key itself, and these secrets are hidden from the session               |
+| Setup script          | Leave empty. The refresh prompt installs dependencies                                                           |
+| Environment variables | Scroll down. Two lines, no quotes, no spaces around `=`: `SCOUT_JOB_SHEET_ID` and `GOOGLE_SERVICE_ACCOUNT_JSON` |
+
+The hosts Scout calls are `sheets.googleapis.com`, `oauth2.googleapis.com`,
+`boards-api.greenhouse.io`, `api.lever.co`, `api.ashbyhq.com`,
+`api.smartrecruiters.com`, and `remotive.com`.
+
+Put the variable name in the **Environment variables** box, not in the **Name**
+field. [In the cloud](#in-the-cloud) gives the full steps, including how to copy
+the key without displaying it.
 
 ## Schedule it
 

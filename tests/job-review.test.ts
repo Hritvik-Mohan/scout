@@ -1,7 +1,17 @@
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import type { GoogleSheetsWorkbookTransport } from "../src/integrations/google-sheets.js";
 import { boardSlugCandidates } from "../src/jobs/board-detection.js";
+import {
+  readSearchRepoState,
+  searchRepoWarning,
+  syncSearchRepo,
+} from "../src/jobs/search-repo.js";
 import { JobReviewSheetRepository } from "../src/jobs/review-sheet.js";
 import { stripMarkup } from "../src/jobs/text.js";
 import {
@@ -184,5 +194,49 @@ describe("job reviews", () => {
       "'Application Kit'!A3:I3",
     ]);
     expect(writes[1]?.values[0]?.slice(0, 2)).toEqual([82, "apply_now"]);
+  });
+});
+
+describe("private search repository", () => {
+  const run = (directory: string, args: string[]): string =>
+    execFileSync("git", ["-C", directory, ...args], { encoding: "utf8" });
+
+  it("warns only when edits have not been pushed", () => {
+    const clean = { isRepo: true, dirty: false, ahead: 0, hasRemote: true };
+    expect(searchRepoWarning(clean)).toBeNull();
+    expect(searchRepoWarning({ ...clean, isRepo: false })).toBeNull();
+    expect(searchRepoWarning({ ...clean, dirty: true })).toContain(
+      "not committed",
+    );
+    expect(searchRepoWarning({ ...clean, ahead: 2 })).toContain(
+      "2 commit(s) that are not pushed",
+    );
+  });
+
+  it("commits and pushes changes to the remote", () => {
+    const root = mkdtempSync(join(tmpdir(), "scout-search-"));
+    const remote = join(root, "remote.git");
+    const work = join(root, "my-search");
+    run(root, ["init", "-q", "--bare", remote]);
+    run(root, ["init", "-q", "-b", "main", work]);
+    run(work, ["config", "user.email", "test@example.test"]);
+    run(work, ["config", "user.name", "Test"]);
+    run(work, ["config", "commit.gpgsign", "false"]);
+    run(work, ["remote", "add", "origin", remote]);
+    expect(readSearchRepoState(join(root, "missing")).isRepo).toBe(false);
+
+    writeFileSync(join(work, "jobs.json"), "{}\n");
+    expect(readSearchRepoState(work).dirty).toBe(true);
+    const first = syncSearchRepo(work);
+    expect(first).toMatchObject({ committed: true, pushed: true });
+    expect(first.state).toMatchObject({ dirty: false, ahead: 0 });
+    expect(run(remote, ["log", "--oneline"]).trim().split("\n")).toHaveLength(
+      1,
+    );
+    expect(syncSearchRepo(work)).toMatchObject({
+      committed: false,
+      pushed: false,
+    });
+    rmSync(root, { recursive: true, force: true });
   });
 });
