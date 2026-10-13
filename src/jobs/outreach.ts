@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { addBusinessDays } from "../core/business-days.js";
 import { checkDailyCap } from "../core/caps.js";
 import { normalizeCompanyName, normalizeEmail } from "../core/dedup.js";
 import { matchDoNotContact, type DoNotContactEntry } from "../core/dnc.js";
@@ -31,12 +32,14 @@ export const JOB_OUTREACH_HEADERS = [
 export const OUTREACH_STATUSES = [
   "Queued",
   "Sent",
+  "Followed up",
   "Replied",
   "Bounced",
   "Do not contact",
 ] as const;
 
 export const DEFAULT_OUTREACH_DAILY_CAP = 20;
+export const OUTREACH_FOLLOW_UP_BUSINESS_DAYS = 5;
 
 const CLOSED_STAGES = new Set(["Withdrawn", "Rejected", "Closed"]);
 
@@ -463,3 +466,49 @@ export const createdOutreachDraftsSchema = z
 export type CreatedOutreachDraft = z.infer<
   typeof createdOutreachDraftsSchema
 >[number];
+
+/**
+ * Lists contacts emailed a working week or more ago with no reply recorded,
+ * for the daily digest. A contact leaves the list once its Status moves on
+ * from "Sent", so each one is prompted for a single follow-up. Returns an
+ * empty string when there is nothing to report.
+ */
+export function buildOutreachFollowUps(
+  sheetRows: readonly (readonly unknown[])[],
+  options: { today: string; afterBusinessDays?: number },
+): string {
+  const after = options.afterBusinessDays ?? OUTREACH_FOLLOW_UP_BUSINESS_DAYS;
+  const calendar = { workingDays: [1, 2, 3, 4, 5], holidays: [] };
+  const sent = outreachRows(sheetRows)
+    .filter((row) => row.status === "Sent")
+    .map((row) => ({ row, emailedOn: sheetDay(row.contactedOn) }));
+  const due = sent
+    .flatMap(({ row, emailedOn }) =>
+      emailedOn !== null &&
+      addBusinessDays(emailedOn, after, calendar) <= options.today
+        ? [{ row, emailedOn }]
+        : [],
+    )
+    .sort(
+      (left, right) =>
+        left.emailedOn.localeCompare(right.emailedOn) ||
+        left.row.rowNumber - right.row.rowNumber,
+    );
+  const undated = sent.filter(({ emailedOn }) => emailedOn === null).length;
+  const lines: string[] = [];
+  if (due.length > 0) {
+    lines.push(
+      `Follow up with contacts (emailed ${String(after)}+ working days ago, no reply recorded):`,
+      ...due.map(
+        ({ row, emailedOn }) =>
+          `- Outreach row ${String(row.rowNumber)} | emailed ${emailedOn} | ${row.name} | ${row.email} | ${row.company}`,
+      ),
+    );
+  }
+  if (undated > 0) {
+    lines.push(
+      `${String(undated)} sent contact(s) have no Contacted On date, so no follow-up can be timed.`,
+    );
+  }
+  return lines.join("\n");
+}

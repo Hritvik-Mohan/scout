@@ -521,6 +521,13 @@ listed under "Held back" with the reason. After you send an email yourself, set
 **Status** to `Sent` and fill in **Contacted On**. Scout never changes those
 columns or **Notes**.
 
+`npm run jobs:digest` reminds you to follow up. A contact is listed once it has
+been `Sent` for five working days (Monday to Friday) with no change of status.
+When you have followed up, set **Status** to `Followed up`; when they answer,
+set it to `Replied`. Either one takes the contact off the list, so each contact
+is prompted for one follow-up and no more. A `Sent` row with no **Contacted On**
+date cannot be timed, and the digest says how many there are.
+
 ### Gmail drafts
 
 Scout can turn the day's batch into Gmail drafts for you to read, edit and send.
@@ -764,7 +771,8 @@ create one. Adjust the windows with `SCOUT_MONITOR_MAX_SILENCE_HOURS` and
 - **Digest.** Open roles are ranked by fit less a penalty for old postings.
   Applications with no recorded response after a week are listed for follow-up.
 - **Outreach.** Contacts you add are matched to roles by company name. The daily
-  batch holds only contacts whose role passed review, up to the cap.
+  batch holds only contacts whose role passed review, up to the cap. The digest
+  lists contacts emailed five working days ago with no reply recorded.
 - **Date Added.** Column AB records when a role first entered the pipeline.
 
 ## Location-specific extras
