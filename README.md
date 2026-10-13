@@ -1,4 +1,4 @@
-# Scout
+# Scout 🐝
 
 Scout is a private job-search pipeline. It polls company job boards, keeps the
 roles that match what you are looking for, ranks them against your real
