@@ -436,6 +436,7 @@ Update the ICP whenever your resume changes, then re-run the review with
 | `npm run jobs:outcomes`                       | Print responses and interviews by verdict, level, and source    |
 | `npm run jobs:outreach:import -- <file.csv>`  | Add contacts you found to the Outreach tab                      |
 | `npm run jobs:outreach:plan`                  | Print today's outreach batch, capped at 20 a day                |
+| `npm run jobs:outreach:drafts`                | Export today's batch as draft emails for Claude to put in Gmail |
 | `npm run jobs:monitor`                        | Check run health and open GitHub issues for problems            |
 | `npm run jobs:sources:discover`               | Probe employers in the Companies tab for job boards             |
 | `npm run jobs:config:check`                   | Validate the three files in `my-search/`                        |
@@ -519,6 +520,45 @@ Contacts are ranked by the fit of the linked role, and everything left out is
 listed under "Held back" with the reason. After you send an email yourself, set
 **Status** to `Sent` and fill in **Contacted On**. Scout never changes those
 columns or **Notes**.
+
+### Gmail drafts
+
+Scout can turn the day's batch into Gmail drafts for you to read, edit and send.
+It needs Claude Code with a Gmail connector; Scout itself holds no Gmail access,
+and nothing is sent.
+
+1. `npm run jobs:outreach:drafts` writes `.local/outreach/drafts.json`, one
+   entry per contact in the batch: `to`, `subject`, `body` and the tab row. The
+   body is the **Outreach Draft (not sent)** written for the contact's role in
+   Application Kit, with the contact's **Name** in place of `[name]`.
+2. Claude creates one Gmail draft per entry, then writes
+   `.local/outreach/created.json` listing each draft it made as
+   `{ "rowNumber": 2, "to": "careers@acme.example" }`.
+3. `npm run jobs:outreach:drafts:record -- .local/outreach/created.json` stamps
+   today's date in **Draft Created**, so the contact is not drafted twice. The
+   plan then marks it "draft ready".
+
+A contact is left out when it already has a draft, or when its role has no
+outreach draft in Application Kit; review the role first. Drafts carry no
+attachment, so add your resume in Gmail before you send.
+
+Paste this prompt into Claude Code to run the three steps:
+
+```text
+Create today's Scout outreach drafts in Gmail. Read the README's "Gmail
+drafts" section first.
+
+1. Run `npm run jobs:outreach:drafts` and read .local/outreach/drafts.json.
+   If it is empty, tell me why from the command's output and stop.
+2. For each entry, create one Gmail draft with exactly its `to`, `subject`
+   and `body` as plain text. Do not rewrite the body, add recipients or
+   attach anything. Create drafts only: never send, schedule or reply.
+3. Write .local/outreach/created.json with `rowNumber` and `to` for each
+   draft that was created, and nothing for any that failed.
+4. Run `npm run jobs:outreach:drafts:record -- .local/outreach/created.json`
+   and report how many drafts were created and recorded, and any that were
+   not.
+```
 
 ## Set up Claude Code
 
@@ -821,8 +861,8 @@ For a major release, edit the notes to list exactly what users must change.
 - It records only publicly published contact details, with the source URL, and
   never guesses an address.
 - The Outreach tab holds only contacts you add, each with the public page the
-  address came from. Scout plans a capped daily batch; you write and send every
-  email yourself.
+  address came from. Scout plans a capped daily batch and can prepare Gmail
+  drafts through Claude; you read and send every email yourself.
 - Evidence-required rules earn no credit without a source URL. A hard
   disqualifier or a missing required criterion rejects a role.
 - Keep `.env`, the service-account key, and your sheet ID out of Git. `.env` and

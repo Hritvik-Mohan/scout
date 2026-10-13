@@ -28,6 +28,8 @@
     "jobs:outcomes": "npm run build && node --env-file-if-exists=.env dist/commands/job-outcomes.js",
     "jobs:outreach:import": "npm run build && node --env-file-if-exists=.env dist/commands/import-outreach-contacts.js",
     "jobs:outreach:plan": "npm run build && node --env-file-if-exists=.env dist/commands/plan-outreach.js",
+    "jobs:outreach:drafts": "npm run build && node --env-file-if-exists=.env dist/commands/export-outreach-drafts.js",
+    "jobs:outreach:drafts:record": "npm run build && node --env-file-if-exists=.env dist/commands/record-outreach-drafts.js",
     "jobs:sources:discover": "npm run build && node --env-file-if-exists=.env dist/commands/discover-job-sources.js",
     "jobs:companies": "npm run build && node --env-file-if-exists=.env dist/commands/run-company-scout.js",
     "jobs:import:lets-code": "npm run build && node --env-file-if-exists=.env dist/commands/import-lets-code-workbook.js",
