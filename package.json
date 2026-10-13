@@ -14,6 +14,7 @@
     "lint": "eslint .",
     "profile:validate": "node dist/commands/validate-profile.js",
     "profile:score": "node dist/commands/score-opportunity.js",
+    "jobs:config:check": "npm run build && node --env-file-if-exists=.env dist/commands/check-job-config.js",
     "jobs:sheet:create": "npm run build && node --env-file-if-exists=.env dist/commands/create-job-sheet.js",
     "jobs:sheet:init": "npm run build && node --env-file-if-exists=.env dist/commands/initialize-job-sheet.js",
     "jobs:run": "npm run build && node --env-file-if-exists=.env dist/commands/run-job-scout.js",

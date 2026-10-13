@@ -4,6 +4,7 @@ import { GreenhouseJobDiscoveryAdapter } from "./greenhouse.js";
 import { LeverJobDiscoveryAdapter } from "./lever.js";
 import type { JobDiscoveryAdapter } from "./model.js";
 import { RemotiveJobDiscoveryAdapter } from "./remotive.js";
+import { DEFAULT_JOB_SEARCH, type JobSearchConfig } from "./search-config.js";
 import { SmartRecruitersJobDiscoveryAdapter } from "./smartrecruiters.js";
 
 export interface ConfiguredJobSource {
@@ -90,6 +91,7 @@ export function completeFeedIdPrefix(
 export function createJobDiscoveryAdapter(
   source: ConfiguredJobSource,
   fetchImpl: FetchLike = fetch,
+  search: JobSearchConfig = DEFAULT_JOB_SEARCH,
 ): JobDiscoveryAdapter {
   const url = new URL(source.url);
   if (source.type === "remotive") {
@@ -106,6 +108,7 @@ export function createJobDiscoveryAdapter(
       boardToken: requiredSegmentAfter(url, "boards"),
       company: source.name,
       fetch: fetchImpl,
+      search,
     });
   }
   if (source.type === "smartrecruiters") {

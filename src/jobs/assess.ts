@@ -1,4 +1,5 @@
 import type { DiscoveredJob } from "./model.js";
+import { DEFAULT_JOB_SEARCH, type JobSearchConfig } from "./search-config.js";
 import type {
   OpportunityAssessment,
   RuleAssessment,
@@ -26,117 +27,56 @@ const minimumYears = (text: string): number | null => {
   return years.length === 0 ? null : Math.max(...years);
 };
 
+const LEVELS: Record<string, number> = { i: 1, ii: 2, iii: 3, iv: 4, v: 5 };
+
+/** The numbered level in a title such as "SDE III" or "Engineer 2", else 0. */
+const titleLevel = (title: string): number => {
+  const levels = [
+    ...title.matchAll(
+      /\b(?:sde|engineer|developer)\s*(?:[-–—/]\s*)?(iii|ii|iv|i|v|[1-5])\b/giu,
+    ),
+  ].map((match) => {
+    const raw = (match[1] ?? "").toLowerCase();
+    return LEVELS[raw] ?? Number(raw);
+  });
+  return levels.length === 0 ? 0 : Math.max(...levels);
+};
+
 export interface AssessedJob {
   assessment: OpportunityAssessment;
   experienceRequired: string;
   techStack: readonly string[];
 }
 
-export function assessJob(job: DiscoveredJob): AssessedJob {
+export function assessJob(
+  job: DiscoveredJob,
+  search: JobSearchConfig = DEFAULT_JOB_SEARCH,
+): AssessedJob {
   const title = job.title.toLowerCase();
   const text =
     `${job.title} ${job.description} ${job.tags.join(" ")}`.toLowerCase();
   const location = job.candidateLocation.toLowerCase();
   const url = job.url;
-  const roleMatch = includesAny(title, [
-    "software engineer",
-    "software developer",
-    "sde",
-    "backend",
-    "back-end",
-    "platform engineer",
-    "infrastructure engineer",
-    "distributed systems",
-    "product engineer",
-    "full stack",
-    "full-stack",
-    "api engineer",
-    "developer tools",
-  ]);
-  const nonDevelopment = includesAny(title, [
-    "quality assurance",
-    " qa ",
-    "support engineer",
-    "l3 support",
-    "sdet",
-    "engineer in test",
-    "sales engineer",
-    "data scientist",
-    "product manager",
-    "designer",
-    "recruiter",
-    "code trainer",
-    "ai trainer",
-    "code evaluator",
-    "data annotator",
-  ]);
-  const specialistMismatch = includesAny(title, [
-    "frontend",
-    "front-end",
-    "ios",
-    "android",
-    "mobile engineer",
-    "machine learning researcher",
-    "security researcher",
-    "embedded",
-    "firmware",
-  ]);
-  const higherSdeLevel =
-    /\b(?:sde|engineer|developer)\s*(?:[-–—/]\s*)?(?:iii|iv|v|3|4|5)\b/iu.test(
-      title,
-    );
+  const roleMatch = includesAny(title, search.roleTitles);
+  const nonDevelopment = includesAny(title, search.nonDevelopmentTitles);
+  const specialistMismatch = includesAny(title, search.specialistTitles);
+  const higherSdeLevel = titleLevel(title) > search.maxLevel;
   const tooSenior =
-    higherSdeLevel ||
-    includesAny(title, [
-      "staff ",
-      "principal",
-      "director",
-      "head of",
-      "engineering manager",
-      "manager,",
-      "manager -",
-      "manager of",
-      "lead engineer",
-      "architect",
-    ]);
+    higherSdeLevel || includesAny(title, search.tooSeniorTitles);
   const years = minimumYears(text);
-  const technicalTerms = [
-    "backend",
-    "back-end",
-    "distributed",
-    "microservice",
-    "node.js",
-    "nodejs",
-    "typescript",
-    "javascript",
-    "java",
-    "c++",
-    "api",
-    "websocket",
-    "queue",
-    "aws",
-    "docker",
-    "observability",
-    "reliability",
-    "platform",
-  ];
+  const technicalTerms = search.technicalTerms;
   const techStack = technicalTerms.filter((term) => text.includes(term));
   const technicalFit = techStack.length >= 2;
-  const bengaluruFit = includesAny(location, ["bangalore", "bengaluru"]);
+  const primaryLocationFit = includesAny(location, search.primaryLocations);
   const remoteSignal =
     job.provider === "Remotive" ||
     includesAny(text, ["remote", "work from home", "work-from-home"]);
-  const indiaEligible = includesAny(location, [
-    "worldwide",
-    "anywhere",
-    "global",
-    "india",
-  ]);
-  const remoteIndiaFit = remoteSignal && indiaEligible;
-  const locationFit = bengaluruFit || remoteIndiaFit;
+  const remoteEligible = includesAny(location, search.remoteEligibleTerms);
+  const remoteFit = remoteSignal && remoteEligible;
+  const locationFit = primaryLocationFit || remoteFit;
   const disqualifiers: string[] = [];
   if (!locationFit) disqualifiers.push("work_authorization_mismatch");
-  if (tooSenior || (years !== null && years >= 7))
+  if (tooSenior || (years !== null && years >= search.hardMaxYears))
     disqualifiers.push("clearly_too_senior");
   if (nonDevelopment) disqualifiers.push("non_development_role");
   if (specialistMismatch) disqualifiers.push("specialization_mismatch");
@@ -150,29 +90,8 @@ export function assessJob(job: DiscoveredJob): AssessedJob {
     "continuous integration",
     "slo",
   ]);
-  const systemsMatch = includesAny(text, [
-    "distributed",
-    "microservice",
-    "high availability",
-    "fault tolerance",
-    "load balancing",
-    "rate limit",
-    "queue",
-    "observability",
-    "latency",
-    "performance",
-  ]);
-  const platformMatch = includesAny(text, [
-    "typescript",
-    "node.js",
-    "nodejs",
-    "rest api",
-    "websocket",
-    "aws",
-    "docker",
-    "developer tool",
-    "infrastructure",
-  ]);
+  const systemsMatch = includesAny(text, search.systemsTerms);
+  const platformMatch = includesAny(text, search.platformTerms);
   const experienceRequired =
     years === null
       ? "Not explicitly stated - verify"
@@ -182,7 +101,9 @@ export function assessJob(job: DiscoveredJob): AssessedJob {
       opportunityId: job.id,
       title: job.title,
       sourceUrl: job.url,
-      geography: bengaluruFit ? "Bengaluru" : "Remote (India-compatible)",
+      geography: primaryLocationFit
+        ? search.primaryLocationLabel
+        : search.remoteLabel,
       criteria: {
         role_family_fit: assessment(
           roleMatch && !nonDevelopment,
@@ -200,8 +121,12 @@ export function assessJob(job: DiscoveredJob): AssessedJob {
         ),
         seniority_fit: assessment(
           !tooSenior &&
-            !(title.includes("senior") && years !== null && years >= 5) &&
-            (years === null || years <= 5),
+            !(
+              title.includes("senior") &&
+              years !== null &&
+              years >= search.maxYears
+            ) &&
+            (years === null || years <= search.maxYears),
           tooSenior
             ? "The title indicates staff-level, architecture, or management scope."
             : years === null

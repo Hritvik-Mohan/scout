@@ -19,6 +19,7 @@ import {
   parseConfiguredJobSources,
 } from "../jobs/sources.js";
 import { JobReviewSheetRepository } from "../jobs/review-sheet.js";
+import { loadJobSearchConfig } from "../jobs/search-config.js";
 import { loadScoutProfile } from "../profiles/loader.js";
 import { scoreOpportunity } from "../profiles/scorer.js";
 
@@ -39,6 +40,9 @@ if (spreadsheetId === undefined || spreadsheetId === "") {
 }
 const profile = await loadScoutProfile(
   resolve(process.env.SCOUT_PROFILE_PATH ?? "profiles/jobs.json"),
+);
+const search = await loadJobSearchConfig(
+  resolve(process.env.SCOUT_JOB_SEARCH_PATH ?? "profiles/job-search.json"),
 );
 const maxResults = positiveInteger(process.env.SCOUT_JOB_MAX_RESULTS, 100);
 const lookbackHours = positiveInteger(
@@ -67,7 +71,9 @@ if (sources.length === 0) {
 const discoveryResults = await Promise.allSettled(
   sources.map(async (source) => ({
     source,
-    jobs: await createJobDiscoveryAdapter(source).discover(request),
+    jobs: await createJobDiscoveryAdapter(source, fetch, search).discover(
+      request,
+    ),
   })),
 );
 const failures: string[] = [];
@@ -107,7 +113,7 @@ const writes: JobPipelineWrite[] = [];
 const rejectedIds: string[] = [];
 let action = 0;
 for (const job of jobs) {
-  const assessed = assessJob(job);
+  const assessed = assessJob(job, search);
   const score = scoreOpportunity(profile, assessed.assessment);
   if (score.status !== "keep" && score.status !== "action") {
     rejectedIds.push(job.id);

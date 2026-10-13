@@ -1,0 +1,189 @@
+{
+  "schemaVersion": 1,
+  "id": "jobs_john_doe_frontend",
+  "name": "John Doe Frontend Opportunity Scout",
+  "description": "Find mid-level frontend and frontend-leaning full-stack roles in London, or remote roles open to candidates based in the United Kingdom, for an engineer with four years of React and TypeScript experience. John Doe is a fictional example.",
+  "purpose": "jobs",
+  "targetEntity": "An actively hiring product company with a London-based role, or a remote role that accepts candidates working from the United Kingdom, offering an individual-contributor Frontend Engineer, UI Engineer, Web Engineer, or frontend-leaning Full-stack Engineer opening at mid level",
+  "geographyPriority": ["London", "Remote (UK-compatible)"],
+  "criteria": [
+    {
+      "id": "role_family_fit",
+      "label": "Frontend engineering role fit",
+      "description": "The opening is a hands-on individual-contributor role building web user interfaces: Frontend Engineer, UI Engineer, Web Engineer, or a Full-stack Engineer where frontend work is at least half the role.",
+      "weight": 4,
+      "required": true,
+      "evidenceRequired": true
+    },
+    {
+      "id": "technical_domain_fit",
+      "label": "Web frontend fit",
+      "description": "The work substantially overlaps with React, TypeScript, component libraries, design systems, accessibility, web performance, state management, or frontend testing.",
+      "weight": 4,
+      "required": true,
+      "evidenceRequired": true
+    },
+    {
+      "id": "seniority_fit",
+      "label": "Mid-level seniority fit",
+      "description": "The role is mid-level, typically 3-6 years or equivalent capability. Staff, principal, architect, and people-manager scope does not fit.",
+      "weight": 3,
+      "required": true,
+      "evidenceRequired": true
+    },
+    {
+      "id": "location_and_authorization_fit",
+      "label": "Location and authorization fit",
+      "description": "The role is based in London (on-site or hybrid), or is remote while explicitly accepting candidates working from the United Kingdom.",
+      "weight": 3,
+      "required": true,
+      "evidenceRequired": true
+    },
+    {
+      "id": "language_and_stack_fit",
+      "label": "Language and stack fit",
+      "description": "The role uses React, TypeScript, JavaScript, Next.js, CSS, GraphQL, or a comparable modern web stack.",
+      "weight": 3,
+      "required": false,
+      "evidenceRequired": true
+    },
+    {
+      "id": "ownership_and_impact",
+      "label": "Meaningful engineering ownership",
+      "description": "The engineer will own user-facing features, components, or frontend architecture end to end rather than only execute isolated tickets.",
+      "weight": 3,
+      "required": false,
+      "evidenceRequired": true
+    },
+    {
+      "id": "engineering_quality",
+      "label": "Engineering quality culture",
+      "description": "The team values automated testing, accessibility, code review, type safety, performance measurement, or reliable CI/CD practices.",
+      "weight": 2,
+      "required": false,
+      "evidenceRequired": true
+    },
+    {
+      "id": "growth_environment",
+      "label": "Senior growth environment",
+      "description": "The role offers mentorship, design-system or architecture exposure, or a credible path toward senior scope without requiring immediate people management.",
+      "weight": 2,
+      "required": false,
+      "evidenceRequired": true
+    },
+    {
+      "id": "compensation_quality",
+      "label": "Compensation quality",
+      "description": "Published compensation is competitive for the level and location. Missing compensation is unknown rather than a mismatch.",
+      "weight": 1,
+      "required": false,
+      "evidenceRequired": true
+    }
+  ],
+  "signals": [
+    {
+      "id": "verified_current_opening",
+      "label": "Verified current opening",
+      "description": "The role is live on the employer's careers site or another current authoritative hiring source and is not marked filled or closed.",
+      "weight": 3,
+      "required": false,
+      "evidenceRequired": true
+    },
+    {
+      "id": "preferred_systems_overlap",
+      "label": "Preferred systems overlap",
+      "description": "The role explicitly mentions web performance, Core Web Vitals, accessibility, design systems, component libraries, or state management.",
+      "weight": 2,
+      "required": false,
+      "evidenceRequired": true
+    },
+    {
+      "id": "preferred_platform_overlap",
+      "label": "Preferred platform overlap",
+      "description": "The role explicitly mentions React, Next.js, TypeScript, GraphQL, Storybook, Playwright, or frontend testing.",
+      "weight": 2,
+      "required": false,
+      "evidenceRequired": true
+    },
+    {
+      "id": "referral_path",
+      "label": "Referral or hiring-manager path",
+      "description": "A relevant engineer, alumnus, recruiter, founder, or hiring manager can be identified for a targeted referral or direct application follow-up.",
+      "weight": 1,
+      "required": false,
+      "evidenceRequired": true
+    },
+    {
+      "id": "remote_employment_clarity",
+      "label": "Remote employment clarity",
+      "description": "For a remote role, the listing or employer confirms eligible hiring countries, timezone expectations, and the engagement model.",
+      "weight": 1,
+      "required": false,
+      "evidenceRequired": true
+    }
+  ],
+  "disqualifiers": [
+    {
+      "id": "work_authorization_mismatch",
+      "label": "Work authorization mismatch",
+      "description": "The employer restricts hiring to a country where the candidate lacks work authorization and offers neither sponsorship nor a UK-compatible remote arrangement.",
+      "hard": true
+    },
+    {
+      "id": "clearly_too_senior",
+      "label": "Clearly too senior",
+      "description": "The opening requires staff, principal, architect, engineering-manager, or team-lead scope, or makes 8+ years of directly relevant experience a firm minimum.",
+      "hard": true
+    },
+    {
+      "id": "non_development_role",
+      "label": "Non-development role",
+      "description": "The job is primarily manual QA, technical support, design without code, sales engineering, operations, or recruiting rather than software development.",
+      "hard": true
+    },
+    {
+      "id": "specialization_mismatch",
+      "label": "Unrelated specialist role",
+      "description": "The opening requires deep specialist experience in backend-only systems, native mobile, embedded, data engineering, machine learning, or infrastructure operations with no meaningful frontend work.",
+      "hard": true
+    },
+    {
+      "id": "unpaid_or_pay_to_work",
+      "label": "Unpaid or pay-to-work opportunity",
+      "description": "The opportunity is unpaid, charges an application or placement fee, requires purchasing training, or otherwise asks the candidate to pay to obtain the role.",
+      "hard": true
+    },
+    {
+      "id": "unverifiable_or_stale",
+      "label": "Unverifiable or stale opening",
+      "description": "The listing cannot be corroborated through a credible source, has been removed, is explicitly closed, or shows strong signs of being fraudulent or resume harvesting.",
+      "hard": true
+    },
+    {
+      "id": "employment_terms_mismatch",
+      "label": "Employment terms mismatch",
+      "description": "The role has an unacceptable employment bond, commission-only pay, extreme unpaid trial work, or a location or shift requirement incompatible with the candidate's constraints.",
+      "hard": true
+    }
+  ],
+  "thresholds": {
+    "keep": 2.8,
+    "action": 3.8
+  },
+  "outputFields": [
+    "role",
+    "company",
+    "source_url",
+    "date_posted",
+    "location",
+    "work_mode",
+    "experience_required",
+    "tech_stack",
+    "compensation",
+    "contact",
+    "referral_path",
+    "score",
+    "status",
+    "evidence"
+  ]
+}
