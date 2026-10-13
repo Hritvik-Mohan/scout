@@ -19,6 +19,7 @@ import {
   parseConfiguredJobSources,
 } from "../jobs/sources.js";
 import { JobReviewSheetRepository } from "../jobs/review-sheet.js";
+import { readSearchRepoState, searchRepoWarning } from "../jobs/search-repo.js";
 import { loadJobSearchConfig } from "../jobs/search-config.js";
 import { requireSearchFile, searchPaths } from "../jobs/search-paths.js";
 import { loadScoutProfile } from "../profiles/loader.js";
@@ -160,4 +161,6 @@ await repository.appendRun({
 process.stdout.write(
   `${JSON.stringify({ runId, status, sources: sources.length, sourceFailures: failures, discovered: jobs.length, kept, action, inserted, updated, pruned, notOnBoard: missing.flagged, closed: missing.closed, removedClosed: missing.removed.length, finishedAt: finishedAt.toISOString() }, null, 2)}\n`,
 );
+const searchWarning = searchRepoWarning(readSearchRepoState());
+if (searchWarning !== null) process.stderr.write(`Warning: ${searchWarning}\n`);
 if (status === "failed") process.exitCode = 1;

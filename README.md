@@ -29,6 +29,46 @@ A Google Sheet with these tabs:
 Each refresh updates the pipeline, removes postings that have closed, and leaves
 your own columns (Applied, Application Date, Stage, Next Action, Notes) alone.
 
+**Job Pipeline** ranks every open role and flags what differs from your target:
+
+![Job Pipeline tab with roles ranked by fit, verdicts, flags, application status and date added](docs/images/sheet-job-pipeline.png)
+
+**Application Kit** holds what you need to apply to each role:
+
+![Application Kit tab with resume evidence, an outreach draft and a referral path per role](docs/images/sheet-application-kit.png)
+
+Both images are illustrations with fictional data from the John Doe example, not
+a real person's sheet. They show a selection of the columns.
+
+## How it fits together
+
+```mermaid
+flowchart LR
+    boards["Public job boards<br/>Greenhouse, Lever, Ashby,<br/>SmartRecruiters, Remotive"]
+    search["my-search/ (private repo)<br/>ICP, matching terms,<br/>scoring profile"]
+    sched["Scheduler<br/>desktop task or<br/>cloud routine"]
+    update["jobs:update<br/>poll, filter, score, flag,<br/>remove closed postings"]
+    sheet[("Your Google Sheet<br/>Job Pipeline, Application Kit,<br/>Sources, Runs, Companies")]
+    review["Claude Code review<br/>reads each new posting<br/>against your ICP"]
+    digest["jobs:digest<br/>apply next, follow-ups,<br/>outcomes"]
+    you(["You<br/>apply and record status"])
+
+    boards -- "open roles" --> update
+    search -- "titles, stack, locations" --> update
+    sched -. "twice a day" .-> update
+    update -- "kept roles and flags" --> sheet
+    sheet -- "unreviewed roles" --> review
+    search -- "resume facts" --> review
+    review -- "fit, verdict, drafts,<br/>referral path" --> sheet
+    sheet --> digest
+    digest -- "ranked list" --> you
+    you -- "Applied, Stage, Notes" --> sheet
+```
+
+Scout reaches the sheet with a Google service-account key. Claude does the one
+step code cannot: reading a posting against your real experience. Nothing in the
+loop applies, sends a message, or contacts anyone.
+
 ## Quick start
 
 You need Node.js 22.9 or newer, a Google account, and
@@ -146,7 +186,17 @@ cd ..
 
 Without the GitHub CLI, create an empty **private** repository on github.com,
 then run `git remote add origin <its URL>` and `git push -u origin main` inside
-`my-search/`. After editing your files, commit and push there.
+`my-search/`.
+
+After editing your files, send them to the private repository with one command:
+
+```bash
+npm run jobs:search:sync
+```
+
+It commits any changes in `my-search/` and pushes them. Cloud runs read the
+pushed version, so `npm run jobs:update` warns you when your local files are
+ahead of it.
 
 On another computer, clone it back into place:
 
@@ -204,16 +254,48 @@ cp .env.example .env
 ### 2. Create a Google service-account key
 
 Scout reads and writes the sheet as a service account, a robot Google identity
-with its own key. You create it once in Google Cloud. It is free.
+with its own key. You create it once in Google Cloud. It is free, and it takes
+about ten minutes. Steps 2 and 3 of this guide together look like this:
 
-1. Open <https://console.cloud.google.com> and create a project, for example
-   `scout`.
-2. Go to **APIs & Services > Library**. Enable **Google Sheets API** and
-   **Google Drive API**.
-3. Go to **IAM & Admin > Service Accounts** and choose **Create service
-   account**. Give it a name. It needs no roles.
-4. Open the new service account, go to **Keys**, and choose **Add key > Create
-   new key > JSON**. A `.json` file downloads.
+![Six steps: create a project, enable the Sheets and Drive APIs, create a service account, create a JSON key, share the sheet with the service account, and set two values in .env](docs/images/google-setup-steps.png)
+
+The image is an illustration of the path, not a screenshot. How the pieces
+connect once it is done:
+
+```mermaid
+flowchart LR
+    key["Key file (.json)<br/>on your computer"]
+    env[".env<br/>key path + sheet ID"]
+    scout["Scout"]
+    google["Google<br/>checks the key"]
+    sa(["Service account<br/>scout@project.iam.gserviceaccount.com"])
+    sheet[("Your Google Sheet")]
+
+    key --> env
+    env --> scout
+    scout -- "signs in with the key" --> google
+    google -- "acts as" --> sa
+    sa -- "Editor, because you shared it" --> sheet
+```
+
+The key proves Scout is the service account. Sharing the sheet is what lets that
+account in. Both halves are needed.
+
+1. Open the [Google Cloud Console](https://console.cloud.google.com) and
+   [create a project](https://console.cloud.google.com/projectcreate), for
+   example `scout`. Make sure it is the selected project at the top of the page.
+2. Go to **APIs & Services > Library** and enable two APIs:
+   [Google Sheets API](https://console.cloud.google.com/apis/library/sheets.googleapis.com)
+   and
+   [Google Drive API](https://console.cloud.google.com/apis/library/drive.googleapis.com).
+   Open each one and press **Enable**.
+3. Go to
+   [**IAM & Admin > Service Accounts**](https://console.cloud.google.com/iam-admin/serviceaccounts)
+   and choose **Create service account**. Give it a name and finish. Skip the
+   optional steps about roles and user access; it needs none.
+4. Open the new service account, go to the **Keys** tab, and choose **Add key >
+   Create new key > JSON**. A `.json` file downloads. You cannot download the
+   same key again, only create a new one.
 5. Move that file outside the repository and restrict it:
 
    ```bash
@@ -245,6 +327,18 @@ in the sheet.
    ```bash
    npm run jobs:sheet:init
    ```
+
+If that command fails, the message says which half is missing:
+
+| Message contains                         | Cause                                                                      | Fix                                                                        |
+| ---------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `HTTP 403`                               | The sheet is not shared with the service account, or an API is not enabled | Share the sheet as Editor; enable both APIs in the same project as the key |
+| `HTTP 404`                               | The sheet ID is wrong                                                      | Copy the part of the URL between `/d/` and `/edit`                         |
+| `Could not load the default credentials` | The key path in `.env` is wrong or missing                                 | Set `GOOGLE_APPLICATION_CREDENTIALS` to the full file path                 |
+| `invalid_grant` or `Invalid JWT`         | The key was deleted or the clock is wrong                                  | Create a new key; check your computer's date and time                      |
+
+To retire a key, delete it under the service account's **Keys** tab and create a
+new one. Scout uses whichever file `.env` points to.
 
 ### 4. Describe your search
 
@@ -341,6 +435,7 @@ Update the ICP whenever your resume changes, then re-run the review with
 | `npm run jobs:outcomes`                       | Print responses and interviews by verdict, level, and source    |
 | `npm run jobs:sources:discover`               | Probe employers in the Companies tab for job boards             |
 | `npm run jobs:config:check`                   | Validate the three files in `my-search/`                        |
+| `npm run jobs:search:sync`                    | Commit and push `my-search/` to your private repository         |
 | `npm run check`                               | Format, lint, typecheck, test, and build                        |
 
 When you apply to a role, tick **Applied**, set **Application Date**, and keep
@@ -362,6 +457,49 @@ posting against your ICP, written by Claude or by you as JSON matching
 - `referralPath`: for `apply_now` roles, what the posting and the employer's
   official pages say about the team and referral rules, plus a people-search
   link for you to run. It never lists individual employees or guesses a contact.
+
+## Set up Claude Code
+
+Claude Code is the assistant that runs the setup prompt, reviews roles against
+your ICP, and runs the refresh on a schedule. It comes as a desktop app, a
+terminal command, and a web app at <https://claude.ai/code>; install it from
+<https://claude.com/claude-code> and sign in.
+
+| You want to                         | Use                                            |
+| ----------------------------------- | ---------------------------------------------- |
+| Run the setup prompt                | Desktop app or terminal, opened in this folder |
+| Review roles and see the digest     | Desktop app or terminal, opened in this folder |
+| Refresh on a schedule, computer on  | Desktop app scheduled task                     |
+| Refresh on a schedule, computer off | Cloud routine at <https://claude.ai/code>      |
+
+To start a session in the terminal, run `claude` inside the repository folder.
+In the desktop app, open the Code tab and choose the folder. The first time
+Claude runs a command it asks for permission; approve the `npm run` commands
+Scout uses.
+
+### Cloud environment
+
+A cloud routine runs in a cloud environment, which holds its settings. Create
+one at <https://claude.ai/code> from the environment picker, with **Add
+environment**:
+
+<img src="docs/images/claude-cloud-environment.png" alt="The Add cloud environment dialog in Claude Code, with fields for name, network access, network secrets, setup script and environment variables" width="420">
+
+| Field                 | What to enter                                                                                                   |
+| --------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Name                  | Any name, such as `scout`                                                                                       |
+| Network access        | A level that allows the job-board APIs and Google Sheets. If runs report blocked requests, widen it             |
+| Network secrets       | Leave empty. Scout's code must read the key itself, and these secrets are hidden from the session               |
+| Setup script          | Leave empty. The refresh prompt installs dependencies                                                           |
+| Environment variables | Scroll down. Two lines, no quotes, no spaces around `=`: `SCOUT_JOB_SHEET_ID` and `GOOGLE_SERVICE_ACCOUNT_JSON` |
+
+The hosts Scout calls are `sheets.googleapis.com`, `oauth2.googleapis.com`,
+`boards-api.greenhouse.io`, `api.lever.co`, `api.ashbyhq.com`,
+`api.smartrecruiters.com`, and `remotive.com`.
+
+Put the variable name in the **Environment variables** box, not in the **Name**
+field. [In the cloud](#in-the-cloud) gives the full steps, including how to copy
+the key without displaying it.
 
 ## Schedule it
 
