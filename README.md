@@ -719,6 +719,19 @@ For a major release, edit the notes to list exactly what users must change.
 - Your ICP and profile are personal. They stay in `my-search/`, which Git
   ignores; do not commit them to a public repository.
 
+## Contributing
+
+Contributions are welcome: bug reports, new job-board adapters, better matching,
+and clearer docs. [CONTRIBUTING.md](CONTRIBUTING.md) explains how to set up, the
+rules a change must keep, and how to open a pull request. Start with an
+[issue](https://github.com/Hritvik-Mohan/scout/issues/new/choose) for anything
+larger than a small fix.
+
+```bash
+npm ci
+npm run check   # needs no Google account or credentials
+```
+
 ## License
 
 [MIT](LICENSE). You may use, change, and share Scout freely; keep the copyright
