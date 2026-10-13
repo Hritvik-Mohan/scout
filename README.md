@@ -254,16 +254,48 @@ cp .env.example .env
 ### 2. Create a Google service-account key
 
 Scout reads and writes the sheet as a service account, a robot Google identity
-with its own key. You create it once in Google Cloud. It is free.
+with its own key. You create it once in Google Cloud. It is free, and it takes
+about ten minutes. Steps 2 and 3 of this guide together look like this:
 
-1. Open <https://console.cloud.google.com> and create a project, for example
-   `scout`.
-2. Go to **APIs & Services > Library**. Enable **Google Sheets API** and
-   **Google Drive API**.
-3. Go to **IAM & Admin > Service Accounts** and choose **Create service
-   account**. Give it a name. It needs no roles.
-4. Open the new service account, go to **Keys**, and choose **Add key > Create
-   new key > JSON**. A `.json` file downloads.
+![Six steps: create a project, enable the Sheets and Drive APIs, create a service account, create a JSON key, share the sheet with the service account, and set two values in .env](docs/images/google-setup-steps.png)
+
+The image is an illustration of the path, not a screenshot. How the pieces
+connect once it is done:
+
+```mermaid
+flowchart LR
+    key["Key file (.json)<br/>on your computer"]
+    env[".env<br/>key path + sheet ID"]
+    scout["Scout"]
+    google["Google<br/>checks the key"]
+    sa(["Service account<br/>scout@project.iam.gserviceaccount.com"])
+    sheet[("Your Google Sheet")]
+
+    key --> env
+    env --> scout
+    scout -- "signs in with the key" --> google
+    google -- "acts as" --> sa
+    sa -- "Editor, because you shared it" --> sheet
+```
+
+The key proves Scout is the service account. Sharing the sheet is what lets that
+account in. Both halves are needed.
+
+1. Open the [Google Cloud Console](https://console.cloud.google.com) and
+   [create a project](https://console.cloud.google.com/projectcreate), for
+   example `scout`. Make sure it is the selected project at the top of the page.
+2. Go to **APIs & Services > Library** and enable two APIs:
+   [Google Sheets API](https://console.cloud.google.com/apis/library/sheets.googleapis.com)
+   and
+   [Google Drive API](https://console.cloud.google.com/apis/library/drive.googleapis.com).
+   Open each one and press **Enable**.
+3. Go to
+   [**IAM & Admin > Service Accounts**](https://console.cloud.google.com/iam-admin/serviceaccounts)
+   and choose **Create service account**. Give it a name and finish. Skip the
+   optional steps about roles and user access; it needs none.
+4. Open the new service account, go to the **Keys** tab, and choose **Add key >
+   Create new key > JSON**. A `.json` file downloads. You cannot download the
+   same key again, only create a new one.
 5. Move that file outside the repository and restrict it:
 
    ```bash
@@ -295,6 +327,18 @@ in the sheet.
    ```bash
    npm run jobs:sheet:init
    ```
+
+If that command fails, the message says which half is missing:
+
+| Message contains                         | Cause                                                                      | Fix                                                                        |
+| ---------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `HTTP 403`                               | The sheet is not shared with the service account, or an API is not enabled | Share the sheet as Editor; enable both APIs in the same project as the key |
+| `HTTP 404`                               | The sheet ID is wrong                                                      | Copy the part of the URL between `/d/` and `/edit`                         |
+| `Could not load the default credentials` | The key path in `.env` is wrong or missing                                 | Set `GOOGLE_APPLICATION_CREDENTIALS` to the full file path                 |
+| `invalid_grant` or `Invalid JWT`         | The key was deleted or the clock is wrong                                  | Create a new key; check your computer's date and time                      |
+
+To retire a key, delete it under the service account's **Keys** tab and create a
+new one. Scout uses whichever file `.env` points to.
 
 ### 4. Describe your search
 
