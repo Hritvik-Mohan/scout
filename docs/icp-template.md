@@ -1,6 +1,6 @@
 # <Your name> - Job-search ICP
 
-Copy this file to `docs/job-search-icp.md` and fill it in. Scout's review step
+Use this as the outline for `my-search/job-search-icp.md`. Scout's review step
 reads it to rank roles and draft applications, so everything in it must be true
 and checkable against your resume. Delete the guidance lines in angle brackets.
 

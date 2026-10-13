@@ -52,7 +52,7 @@ export async function loadJobSearchConfig(
   );
 }
 
-/** The search used when no file is supplied; mirrors profiles/job-search.json. */
+/** Built-in search for tests and callers that pass no file: a backend search. */
 export const DEFAULT_JOB_SEARCH: JobSearchConfig = jobSearchConfigSchema.parse({
   roleTitles: [
     "software engineer",

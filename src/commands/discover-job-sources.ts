@@ -8,6 +8,7 @@ import {
   type DetectedBoard,
 } from "../jobs/board-detection.js";
 import { loadJobSearchConfig } from "../jobs/search-config.js";
+import { requireSearchFile, searchPaths } from "../jobs/search-paths.js";
 import { loadScoutProfile } from "../profiles/loader.js";
 
 interface ProbeRecord {
@@ -38,10 +39,10 @@ if (spreadsheetId === undefined || spreadsheetId === "") {
 const probeLimit = positiveInteger(process.env.SCOUT_BOARD_PROBE_LIMIT, 150);
 const concurrency = 6;
 const profile = await loadScoutProfile(
-  resolve(process.env.SCOUT_PROFILE_PATH ?? "profiles/jobs.json"),
+  await requireSearchFile(searchPaths().profile),
 );
 const search = await loadJobSearchConfig(
-  resolve(process.env.SCOUT_JOB_SEARCH_PATH ?? "profiles/job-search.json"),
+  await requireSearchFile(searchPaths().search),
 );
 const transport = new GoogleSheetsRestTransport({
   spreadsheetId,

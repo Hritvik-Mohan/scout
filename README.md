@@ -6,8 +6,9 @@ experience, drafts what you need to apply, and tracks what happens next. The
 results live in a Google Sheet you own.
 
 It is built to be reused. Everything about one person's search lives in three
-files, so a fork can serve a different role, stack, city, or experience level
-without code changes.
+files in a `my-search/` folder that Git ignores, so the same code serves any
+role, stack, city, or experience level, and your profile never ends up in a
+shared repository.
 
 Scout never applies, never contacts anyone, and never invents a contact. It
 prepares; you send.
@@ -31,14 +32,22 @@ your own columns (Applied, Application Date, Stage, Next Action, Notes) alone.
 ## Quick start
 
 You need Node.js 22.9 or newer, a Google account, and
-[Claude Code](https://claude.com/claude-code). Fork the repository so your
-profile stays yours, clone it, and open the folder in Claude Code:
+[Claude Code](https://claude.com/claude-code). Fork
+[Hritvik-Mohan/scout](https://github.com/Hritvik-Mohan/scout) so your profile
+stays yours, clone your fork, switch to the
+[latest release](https://github.com/Hritvik-Mohan/scout/releases/latest), and
+open the folder in Claude Code:
 
 ```bash
 git clone https://github.com/<you>/scout.git
 cd scout
+git checkout -b my-search "$(git describe --tags --abbrev=0)"
 claude
 ```
+
+That starts you on a branch of your own at the newest released version, rather
+than on unreleased work. [Versions and upgrading](#versions-and-upgrading)
+explains how to move to a newer release later.
 
 Then paste this prompt. It does the whole setup with you. The only steps it
 cannot do for you are creating the Google key and sharing the sheet, and it
@@ -54,18 +63,17 @@ Set up this Scout repository for my own job search. Read README.md first.
    few questions at a time: the titles I want, titles and specialisms to
    exclude, my seniority ceiling, the cities I will work in, which countries'
    remote roles I can legally take, my core stack, and anything I refuse.
-3. The files docs/job-search-icp.md, profiles/job-search.json and
-   profiles/jobs.json describe the repository's owner, not me. Replace all
-   three. Write docs/job-search-icp.md from docs/icp-template.md, with
-   examples/john-doe/ as a model of the finished result, using only facts from
-   my resume and my answers. Never invent experience, numbers, or skills.
+3. Create my search. Copy examples/john-doe to my-search (it is ignored by
+   Git). Rewrite my-search/job-search-icp.md following docs/icp-template.md,
+   with the John Doe file as a model of the finished result, using only facts
+   from my resume and my answers. Never invent experience, numbers, or skills.
    Where my resume and my stated goals disagree (for example years under my
    current title versus years I claim), say so in the "Resume facts" section
    and tell me. Do not copy my phone number, email, or home address into any
    file.
-4. Rewrite profiles/job-search.json for my search: role titles, excluded and
+4. Rewrite my-search/job-search.json for my search: role titles, excluded and
    too-senior titles, maxLevel, stack terms, cities, remote-eligible terms and
-   experience limits. Update profiles/jobs.json so its id, name, description,
+   experience limits. Update my-search/jobs.json so its id, name, description,
    targetEntity, geographyPriority and criterion descriptions describe me,
    keeping the criterion ids unchanged.
 5. Run `npm run jobs:config:check` and fix what it reports. Run
@@ -91,30 +99,27 @@ or changing it later.
 
 ## Make it yours
 
-These three files define a search. Change them, not the code.
+Three files define a search. They live in `my-search/`, which Git ignores, so
+they stay on your machine and never conflict with updates to Scout.
 
-| File                       | What it controls                                                                                         |
-| -------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `profiles/job-search.json` | Matching terms: role titles, excluded titles, stack words, cities, remote regions, experience ceiling    |
-| `profiles/jobs.json`       | Scoring: which criteria are required, their weights, and the keep and action thresholds                  |
-| `docs/job-search-icp.md`   | Your ideal-role profile and resume facts, which the review step uses to rank roles and write your drafts |
+| File                          | What it controls                                                                                         |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `my-search/job-search.json`   | Matching terms: role titles, excluded titles, stack words, cities, remote regions, experience ceiling    |
+| `my-search/jobs.json`         | Scoring: which criteria are required, their weights, and the keep and action thresholds                  |
+| `my-search/job-search-icp.md` | Your ideal-role profile and resume facts, which the review step uses to rank roles and write your drafts |
 
-The three files in place belong to the repository's owner (backend SDE I/II
-roles in Bengaluru or remote from India) and drive their live pipeline. Do not
-reuse them. A complete fictional example for a different search, John Doe, a
-mid-level frontend engineer in London, is in
-[`examples/john-doe/`](examples/john-doe):
+Create the folder from the fictional example, John Doe, a mid-level frontend
+engineer in London, then make the files yours:
 
-| Example file                          | Replaces                   |
-| ------------------------------------- | -------------------------- |
-| `examples/john-doe/job-search.json`   | `profiles/job-search.json` |
-| `examples/john-doe/jobs.json`         | `profiles/jobs.json`       |
-| `examples/john-doe/job-search-icp.md` | `docs/job-search-icp.md`   |
+```bash
+cp -R examples/john-doe my-search
+```
 
-Start from those or from the blank template, then make them yours.
-[How to write your ICP](#how-to-write-your-icp) explains the third file.
+[How to write your ICP](#how-to-write-your-icp) explains the third file. To keep
+the files somewhere else, set `SCOUT_JOB_SEARCH_PATH`, `SCOUT_PROFILE_PATH`, and
+`SCOUT_ICP_PATH`.
 
-### `profiles/job-search.json`
+### `my-search/job-search.json`
 
 Every term is matched as a lowercase substring.
 
@@ -132,7 +137,7 @@ Every term is matched as a lowercase substring.
 | `primaryLocationLabel`, `remoteLabel` | Display names; each must appear in `geographyPriority` in the profile     |
 | `maxYears`, `hardMaxYears`            | Years asked above which a role stops fitting, and at which it is rejected |
 
-### `profiles/jobs.json`
+### `my-search/jobs.json`
 
 Keep the criterion ids; the assessor reports against them. Change the
 descriptions, weights, `required` flags, `geographyPriority`, and thresholds.
@@ -150,11 +155,13 @@ These are the steps the quick-start prompt performs, for doing them yourself.
 
 ### 1. Get the code
 
-Fork the repository so your profile stays yours, then:
+Fork [Hritvik-Mohan/scout](https://github.com/Hritvik-Mohan/scout) so your
+profile stays yours, then start a branch of your own at the latest release:
 
 ```bash
 git clone https://github.com/<you>/scout.git
 cd scout
+git checkout -b my-search "$(git describe --tags --abbrev=0)"
 npm ci
 cp .env.example .env
 ```
@@ -206,19 +213,15 @@ in the sheet.
 
 ### 4. Describe your search
 
-1. Replace the owner's three files with the John Doe example as a starting
-   point:
+1. Create your search folder from the example:
 
    ```bash
-   cp examples/john-doe/job-search.json profiles/job-search.json
-   cp examples/john-doe/jobs.json profiles/jobs.json
-   cp docs/icp-template.md docs/job-search-icp.md
+   cp -R examples/john-doe my-search
    ```
 
-2. Fill in `docs/job-search-icp.md`, using
-   [`examples/john-doe/job-search-icp.md`](examples/john-doe/job-search-icp.md)
-   as a model, and edit the two JSON files for your own titles, stack, and
-   locations.
+2. Rewrite `my-search/job-search-icp.md` for yourself, following
+   [`docs/icp-template.md`](docs/icp-template.md), and edit the two JSON files
+   for your own titles, stack, and locations.
 3. Run `npm run jobs:config:check` until it reports no problems.
 
 ### 5. Choose your sources
@@ -226,7 +229,8 @@ in the sheet.
 `jobs:sheet:init` fills the **Sources** tab with a starter list aimed at
 Bengaluru. Edit that tab for your market:
 
-- Untick **Active** on boards you do not want.
+- Untick **Active** on boards you do not want. Do not delete starter rows;
+  re-running `jobs:sheet:init` would add them back.
 - Add a row for each company board you do want. Scout can poll these types:
 
   | Type              | URL to enter                                                 |
@@ -256,8 +260,8 @@ npm run jobs:update
 Then rank what it found. In Claude Code, from the repository folder, say:
 
 > Run `npm run jobs:review:pending`, review every pending role against
-> `docs/job-search-icp.md` following the review rules in the README, apply the
-> reviews, and show me `npm run jobs:digest`.
+> `my-search/job-search-icp.md` following the review rules in the README, apply
+> the reviews, and show me `npm run jobs:digest`.
 
 ## How to write your ICP
 
@@ -301,7 +305,7 @@ Update the ICP whenever your resume changes, then re-run the review with
 | `npm run jobs:digest`                         | Print what to apply to next, follow-ups due, and outcomes       |
 | `npm run jobs:outcomes`                       | Print responses and interviews by verdict, level, and source    |
 | `npm run jobs:sources:discover`               | Probe employers in the Companies tab for job boards             |
-| `npm run jobs:config:check`                   | Validate your three files                                       |
+| `npm run jobs:config:check`                   | Validate the three files in `my-search/`                        |
 | `npm run check`                               | Format, lint, typecheck, test, and build                        |
 
 When you apply to a role, tick **Applied**, set **Application Date**, and keep
@@ -368,21 +372,27 @@ It clones your repository each time, so it has no `.env` and no key file.
    repository, and your schedule. Tell it to attach no connectors.
 4. Run it once and read the result before relying on it.
 
+A cloud run only sees what is in your repository, and `my-search/` is ignored by
+Git. To use a cloud routine, keep your fork **private** and remove the
+`my-search/` line from its `.gitignore` so your three files are committed there.
+Do not do this in a public repository.
+
 Merge changes to your default branch before expecting a cloud run to use them.
 
 ### The refresh prompt
 
 ```text
 You are maintaining Scout, a job-search pipeline, for the person described in
-docs/job-search-icp.md. Work in the repository root.
+my-search/job-search-icp.md. Work in the repository root.
 
 Setup: run `npm ci` if node_modules is missing. If there is no .env file, check
 that SCOUT_JOB_SHEET_ID and GOOGLE_SERVICE_ACCOUNT_JSON are set, without
-printing them; if either is missing, stop and say which.
+printing them; if either is missing, stop and say which. If the my-search
+folder is missing, stop and say so.
 
-Read docs/job-search-icp.md, especially "Resume facts". It is the only source
+Read my-search/job-search-icp.md, especially "Resume facts". It is the only source
 of truth about the candidate. The roles, cities and remote regions to target
-are defined there and in profiles/job-search.json.
+are defined there and in my-search/job-search.json.
 
 Steps:
 1. Run `npm run jobs:update` and keep its JSON summary.
@@ -411,9 +421,9 @@ follow-ups due; and the outcome summary.
 
 ## How it works
 
-- **Keep or drop.** Each posting is checked against `profiles/job-search.json`
-  and scored with `profiles/jobs.json`. Only `keep` and `action` roles enter the
-  sheet, identified by a stable ID so a role is never duplicated.
+- **Keep or drop.** Each posting is checked against `my-search/job-search.json`
+  and scored with `my-search/jobs.json`. Only `keep` and `action` roles enter
+  the sheet, identified by a stable ID so a role is never duplicated.
 - **Flags.** Column W marks what differs from your target: a senior title, an
   internship, a data or ML role, a high experience ask, a possible duplicate, or
   a posting older than 45 days.
@@ -451,6 +461,71 @@ npm run profile:validate -- profiles/freelance.json
 npm run profile:score -- profiles/freelance.json examples/freelance-opportunity.json
 ```
 
+## Versions and upgrading
+
+Scout is published as numbered
+[releases](https://github.com/Hritvik-Mohan/scout/releases). Each release is a
+tested state of `main`; `main` itself may contain unreleased work. The version
+has three parts, `major.minor.patch`:
+
+| Part  | Raised when                                  | What you do                  |
+| ----- | -------------------------------------------- | ---------------------------- |
+| patch | A bug is fixed                               | Upgrade when convenient      |
+| minor | A feature is added; your setup keeps working | Upgrade to get the feature   |
+| major | You must change something to keep working    | Read the release notes first |
+
+A major release is one that changes your sheet's columns, the shape of
+`my-search/job-search.json` or `my-search/jobs.json`, or the name of an
+environment variable. Its notes say what to change.
+
+### Upgrade your fork
+
+Your search lives in `my-search/`, which Git ignores, so upgrading never touches
+it.
+
+```bash
+git remote add upstream https://github.com/Hritvik-Mohan/scout.git   # once
+git fetch upstream --tags
+git merge v0.3.0                      # the release you are moving to
+```
+
+Then confirm your setup still works:
+
+```bash
+npm ci
+npm run jobs:config:check
+npm run jobs:update
+```
+
+If you run a cloud routine, push the upgraded branch to the branch the routine
+reads. If a release adds sheet columns, run `npm run jobs:sheet:init` once to
+add the new headers. It does not change your pipeline rows, but it re-adds any
+starter sources you deleted from the Sources tab, so untick **Active** on
+unwanted sources instead of deleting them.
+
+### Publish a release (maintainers)
+
+1. Merge the work into `main` and wait for CI to pass.
+2. Raise the version, which also commits and tags it:
+
+   ```bash
+   git checkout main && git pull && npm version minor   # or patch, or major
+   ```
+
+3. Push the commit and the tag:
+
+   ```bash
+   git push origin main --follow-tags
+   ```
+
+4. Publish, with notes generated from the merged pull requests:
+
+   ```bash
+   gh release create "v$(node -p "require('./package.json').version")" --generate-notes
+   ```
+
+For a major release, edit the notes to list exactly what users must change.
+
 ## Safety
 
 - Scout never applies, sends messages, or contacts recruiters.
@@ -460,4 +535,5 @@ npm run profile:score -- profiles/freelance.json examples/freelance-opportunity.
   disqualifier or a missing required criterion rejects a role.
 - Keep `.env`, the service-account key, and your sheet ID out of Git. `.env` and
   `.local/` are ignored by default.
-- Your ICP and profile are personal. If your fork is public, they are public.
+- Your ICP and profile are personal. They stay in `my-search/`, which Git
+  ignores; do not commit them to a public repository.

@@ -1,10 +1,9 @@
-import { resolve } from "node:path";
-
 import { GoogleAuthAccessTokenProvider } from "../integrations/google-auth.js";
 import {
   createJobSearchWorkbook,
   GoogleJobWorkbookApi,
 } from "../jobs/google-workbook.js";
+import { requireSearchFile, searchPaths } from "../jobs/search-paths.js";
 import { loadScoutProfile } from "../profiles/loader.js";
 
 const shareWith = process.env.SCOUT_SHEET_SHARE_EMAIL?.trim();
@@ -13,16 +12,14 @@ if (!shareWith?.includes("@")) {
     "SCOUT_SHEET_SHARE_EMAIL must contain the Google account that should edit the workbook",
   );
 }
-const profilePath = resolve(
-  process.env.SCOUT_PROFILE_PATH ?? "profiles/jobs.json",
-);
+const profilePath = await requireSearchFile(searchPaths().profile);
 const profile = await loadScoutProfile(profilePath);
 const api = new GoogleJobWorkbookApi(new GoogleAuthAccessTokenProvider());
 const configuredTitle = process.env.SCOUT_JOB_SHEET_TITLE?.trim();
 const result = await createJobSearchWorkbook(api, {
   title:
     configuredTitle === undefined || configuredTitle === ""
-      ? "Hritvik Job Hunt - Scout"
+      ? "Job Hunt - Scout"
       : configuredTitle,
   shareWith,
   profile,
