@@ -21,6 +21,7 @@ A Google Sheet with these tabs:
 | --------------- | ---------------------------------------------------------------- |
 | Job Pipeline    | Open roles that match, with fit score, verdict, flags, and dates |
 | Application Kit | Per role: resume evidence, an outreach draft, a referral path    |
+| Outreach        | Recruiters you found yourself, tied to roles that passed review  |
 | Sources         | The job boards Scout polls                                       |
 | Runs            | A record of every refresh                                        |
 | Companies       | Employers to probe for job boards                                |
@@ -433,6 +434,8 @@ Update the ICP whenever your resume changes, then re-run the review with
 | `npm run jobs:review:apply -- <reviews.json>` | Write reviews and drafts to the sheet                           |
 | `npm run jobs:digest`                         | Print what to apply to next, follow-ups due, and outcomes       |
 | `npm run jobs:outcomes`                       | Print responses and interviews by verdict, level, and source    |
+| `npm run jobs:outreach:import -- <file.csv>`  | Add contacts you found to the Outreach tab                      |
+| `npm run jobs:outreach:plan`                  | Print today's outreach batch, capped at 20 a day                |
 | `npm run jobs:monitor`                        | Check run health and open GitHub issues for problems            |
 | `npm run jobs:sources:discover`               | Probe employers in the Companies tab for job boards             |
 | `npm run jobs:config:check`                   | Validate the three files in `my-search/`                        |
@@ -458,6 +461,64 @@ posting against your ICP, written by Claude or by you as JSON matching
 - `referralPath`: for `apply_now` roles, what the posting and the employer's
   official pages say about the team and referral rules, plus a people-search
   link for you to run. It never lists individual employees or guesses a contact.
+
+### Outreach contacts
+
+The Outreach tab holds recruiters and hiring contacts you looked up yourself.
+Scout does not search for people or addresses; it checks what you bring, ties
+each contact to a role, and tells you who to write to today.
+
+Add contacts in either of two ways:
+
+- Type them straight into the Outreach tab. Run `npm run jobs:outreach:plan`
+  once to create the tab.
+- Import a CSV with `npm run jobs:outreach:import -- <file.csv>`. The columns
+  are `name`, `company`, `email` and `source_url`, plus optional `title`,
+  `opportunity_id` and `notes`;
+  [`examples/outreach-contacts.csv`](examples/outreach-contacts.csv) shows the
+  layout. Keep your own file in `.local/`, which Git ignores.
+
+The file is yours to create; Scout does not ship one. Start it from the example
+and replace the sample lines with your own:
+
+```bash
+mkdir -p .local
+cp examples/outreach-contacts.csv .local/contacts.csv
+npm run jobs:outreach:import -- .local/contacts.csv
+```
+
+There are two honest places to find a contact:
+
+- **The Companies tab.** Its **Public Recruiting Email** column holds shared
+  hiring inboxes, such as `careers@`, that Scout found on an employer's own
+  site. Use the page that shows the address as `source_url`, and a name such as
+  "Acme hiring team". Expect few of these: most employers publish no hiring
+  address. General inboxes in **Other Public Emails**, such as `hello@` or
+  `support@`, are not hiring contacts.
+- **Your own research.** A named recruiter is yours to find, for example from a
+  posting that names its hiring contact or from the **Referral Path** in
+  Application Kit. Add the person only when their address is published on a page
+  you can link to.
+
+`source_url` is the public page where the address is published. A contact
+without one is rejected on import and held back from every batch, so do not add
+an address you guessed from a name pattern. Import also skips an address that is
+already in the tab or marked **Do not contact**.
+
+`npm run jobs:outreach:plan` prints the day's batch. It creates the Outreach tab
+if it is missing and otherwise changes nothing. A contact is in the batch only
+when:
+
+- its **Status** is `Queued` or blank,
+- its company has an open role you reviewed with a verdict other than `skip`
+  (set `opportunity_id` to pin a particular role), and
+- the day's cap has room. The cap is 20, less the rows whose **Contacted On** is
+  today; pass `-- --cap=<n>` to change it.
+
+Contacts are ranked by the fit of the linked role, and everything left out is
+listed under "Held back" with the reason. After you send an email yourself, set
+**Status** to `Sent` and fill in **Contacted On**. Scout never changes those
+columns or **Notes**.
 
 ## Set up Claude Code
 
@@ -662,6 +723,8 @@ create one. Adjust the windows with `SCOUT_MONITOR_MAX_SILENCE_HOURS` and
   rows stay and are flagged "Closed". A role that reappears returns to normal.
 - **Digest.** Open roles are ranked by fit less a penalty for old postings.
   Applications with no recorded response after a week are listed for follow-up.
+- **Outreach.** Contacts you add are matched to roles by company name. The daily
+  batch holds only contacts whose role passed review, up to the cap.
 - **Date Added.** Column AB records when a role first entered the pipeline.
 
 ## Location-specific extras
@@ -757,6 +820,9 @@ For a major release, edit the notes to list exactly what users must change.
 - Scout never applies, sends messages, or contacts recruiters.
 - It records only publicly published contact details, with the source URL, and
   never guesses an address.
+- The Outreach tab holds only contacts you add, each with the public page the
+  address came from. Scout plans a capped daily batch; you write and send every
+  email yourself.
 - Evidence-required rules earn no credit without a source URL. A hard
   disqualifier or a missing required criterion rejects a role.
 - Keep `.env`, the service-account key, and your sheet ID out of Git. `.env` and
