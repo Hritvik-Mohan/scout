@@ -43,6 +43,13 @@ export class JobReviewSheetRepository {
     return this.transport.getValues("'Job Pipeline'!A2:AA1000");
   }
 
+  /** Application Kit rows, or none when the tab does not exist yet. */
+  kitRows(): Promise<readonly (readonly unknown[])[]> {
+    return this.transport
+      .getValues(`'${JOB_APPLICATION_KIT_SHEET}'!A2:H1000`)
+      .catch(() => []);
+  }
+
   private async ensureKitSheet(): Promise<void> {
     const metadata = await this.transport.getSpreadsheet<SheetMetadata>(
       "sheets(properties(title))",

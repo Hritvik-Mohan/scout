@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import type { GoogleSheetsWorkbookTransport } from "../src/integrations/google-sheets.js";
 import { JobOutreachSheetRepository } from "../src/jobs/outreach-sheet.js";
 import {
+  buildOutreachDrafts,
   buildOutreachPlan,
+  createdOutreachDraftsSchema,
   formatOutreachPlan,
   outreachRows,
   parseOutreachCsv,
@@ -55,6 +57,7 @@ const sheetRow = (
     opportunityId?: string;
     status?: string;
     contactedOn?: unknown;
+    draftCreated?: string;
   } = {},
 ): unknown[] => [
   name,
@@ -68,6 +71,7 @@ const sheetRow = (
   options.contactedOn ?? "",
   "",
   "2026-10-10",
+  options.draftCreated ?? "",
 ];
 
 describe("outreach contacts CSV", () => {
@@ -243,7 +247,96 @@ describe("outreach plan", () => {
   });
 });
 
+describe("outreach drafts", () => {
+  it("fills the role's outreach draft with the contact's name", () => {
+    const kitRow = (id: string, draft: string): unknown[] => {
+      const row: unknown[] = Array.from({ length: 8 }, () => "");
+      row[0] = id;
+      row[7] = draft;
+      return row;
+    };
+    const plan = buildOutreachPlan(
+      [
+        sheetRow("Asha Rao", "Acme", "Asha@Acme.example"),
+        sheetRow("Drafted", "Acme", "drafted@acme.example", {
+          draftCreated: "2026-10-12",
+        }),
+        sheetRow("Beta One", "Beta", "one@beta.example"),
+      ],
+      entries,
+      { today: "2026-10-13" },
+    );
+    const result = buildOutreachDrafts(plan, [
+      kitRow(
+        "b",
+        "Hello [name],\nI built a routing engine. [Name], shall we talk?",
+      ),
+      kitRow("f", ""),
+    ]);
+    expect(result.drafts).toEqual([
+      {
+        rowNumber: 2,
+        to: "asha@acme.example",
+        name: "Asha Rao",
+        company: "Acme",
+        opportunityId: "b",
+        role: "Role b",
+        subject: "Role b role at Acme",
+        body: "Hello Asha Rao,\nI built a routing engine. Asha Rao, shall we talk?",
+      },
+    ]);
+    expect(result.alreadyDrafted).toBe(1);
+    expect(result.missing.map(({ row }) => row.name)).toEqual(["Beta One"]);
+    expect(formatOutreachPlan(plan)).toContain(
+      "drafted@acme.example | Acme - Role b | fit 90 (apply_now) | draft ready",
+    );
+  });
+
+  it("accepts only row and address in the created-drafts file", () => {
+    expect(
+      createdOutreachDraftsSchema.parse([{ rowNumber: 2, to: "A@b.co" }]),
+    ).toEqual([{ rowNumber: 2, to: "a@b.co" }]);
+    expect(createdOutreachDraftsSchema.safeParse([]).success).toBe(false);
+    expect(
+      createdOutreachDraftsSchema.safeParse([
+        { rowNumber: 2, to: "a@b.co", sent: true },
+      ]).success,
+    ).toBe(false);
+  });
+});
+
 describe("outreach sheet", () => {
+  it("stamps Draft Created only where the address still matches", async () => {
+    const writes: { range: string; values: readonly (readonly unknown[])[] }[] =
+      [];
+    const transport: GoogleSheetsWorkbookTransport = {
+      getValues: () =>
+        Promise.resolve([
+          sheetRow("Asha", "Acme", "asha@acme.example"),
+          sheetRow("Moved", "Acme", "moved@acme.example"),
+        ]),
+      batchUpdateValues: (updates) => {
+        writes.push(...updates);
+        return Promise.resolve();
+      },
+      appendValues: () => Promise.resolve(),
+      getSpreadsheet: <T>() => Promise.resolve({} as T),
+      batchUpdateSpreadsheet: <T>() => Promise.resolve({} as T),
+    };
+    const result = await new JobOutreachSheetRepository(transport).recordDrafts(
+      [
+        { rowNumber: 2, to: "asha@acme.example" },
+        { rowNumber: 3, to: "someone-else@acme.example" },
+        { rowNumber: 9, to: "nobody@acme.example" },
+      ],
+      "2026-10-13",
+    );
+    expect(result).toEqual({ recorded: 1, mismatched: [3, 9] });
+    expect(writes).toEqual([
+      { range: "'Outreach'!L2", values: [["2026-10-13"]] },
+    ]);
+  });
+
   it("creates the tab with a status list and appends contacts", async () => {
     const requests: unknown[] = [];
     const writes: string[] = [];
@@ -276,6 +369,6 @@ describe("outreach sheet", () => {
     expect(JSON.stringify(requests[1])).toContain(
       '"sheetId":7,"startRowIndex":1,"endRowIndex":1000,"startColumnIndex":7',
     );
-    expect(writes).toEqual(["'Outreach'!A1:K1", "'Outreach'!A:K +1"]);
+    expect(writes).toEqual(["'Outreach'!A1:L1", "'Outreach'!A:L +1"]);
   });
 });

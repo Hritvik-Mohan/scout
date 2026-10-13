@@ -1,9 +1,17 @@
 import type { GoogleSheetsWorkbookTransport } from "../integrations/google-sheets.js";
+import { normalizeEmail } from "../core/dedup.js";
 import {
+  buildOutreachPlan,
   JOB_OUTREACH_HEADERS,
   JOB_OUTREACH_SHEET,
+  localDay,
   OUTREACH_STATUSES,
+  outreachRows,
+  type CreatedOutreachDraft,
+  type OutreachPlan,
 } from "./outreach.js";
+import { JobReviewSheetRepository } from "./review-sheet.js";
+import { pipelineEntries } from "./review.js";
 
 interface SheetMetadata {
   sheets?: { properties?: { title?: string } }[];
@@ -67,18 +75,66 @@ export class JobOutreachSheetRepository {
     }
     await this.transport.batchUpdateValues([
       {
-        range: `'${JOB_OUTREACH_SHEET}'!A1:K1`,
+        range: `'${JOB_OUTREACH_SHEET}'!A1:L1`,
         values: [JOB_OUTREACH_HEADERS],
       },
     ]);
   }
 
   rows(): Promise<readonly (readonly unknown[])[]> {
-    return this.transport.getValues(`'${JOB_OUTREACH_SHEET}'!A2:K1000`);
+    return this.transport.getValues(`'${JOB_OUTREACH_SHEET}'!A2:L1000`);
   }
 
   async appendContacts(rows: readonly (readonly string[])[]): Promise<void> {
     if (rows.length === 0) return;
-    await this.transport.appendValues(`'${JOB_OUTREACH_SHEET}'!A:K`, rows);
+    await this.transport.appendValues(`'${JOB_OUTREACH_SHEET}'!A:L`, rows);
   }
+
+  /**
+   * Stamps Draft Created (column L) for contacts whose Gmail draft now exists.
+   * A row is skipped when its address no longer matches, so a re-sorted tab is
+   * never stamped on the wrong contact.
+   */
+  async recordDrafts(
+    created: readonly CreatedOutreachDraft[],
+    createdOn: string,
+  ): Promise<{ recorded: number; mismatched: readonly number[] }> {
+    const rows = new Map(
+      outreachRows(await this.rows()).map((row) => [row.rowNumber, row]),
+    );
+    const matched = created.filter(
+      (draft) => normalizeEmail(rows.get(draft.rowNumber)?.email) === draft.to,
+    );
+    if (matched.length > 0) {
+      await this.transport.batchUpdateValues(
+        matched.map((draft) => ({
+          range: `'${JOB_OUTREACH_SHEET}'!L${String(draft.rowNumber)}`,
+          values: [[createdOn]],
+        })),
+      );
+    }
+    return {
+      recorded: matched.length,
+      mismatched: created
+        .filter((draft) => !matched.includes(draft))
+        .map((draft) => draft.rowNumber),
+    };
+  }
+}
+
+/** Reads the Outreach tab and Job Pipeline and builds today's batch. */
+export async function loadOutreachPlan(
+  transport: GoogleSheetsWorkbookTransport,
+  options: { now: Date; cap: number },
+): Promise<OutreachPlan> {
+  const outreach = new JobOutreachSheetRepository(transport);
+  await outreach.ensureSheet();
+  return buildOutreachPlan(
+    await outreach.rows(),
+    pipelineEntries(
+      await new JobReviewSheetRepository(transport).pipelineRows(),
+      options.now,
+    ),
+    { today: localDay(options.now), cap: options.cap },
+  );
 }

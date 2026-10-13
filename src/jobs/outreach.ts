@@ -9,8 +9,9 @@ import { parseSheetDate, type PipelineEntry } from "./review.js";
 export const JOB_OUTREACH_SHEET = "Outreach";
 
 /**
- * Scout writes a row once, on import. Status, Contacted On and Notes belong to
- * the human afterwards; nothing here is ever sent by Scout.
+ * Scout writes a row on import and stamps Draft Created once a Gmail draft
+ * exists. Status, Contacted On and Notes belong to the human; nothing here is
+ * ever sent by Scout.
  */
 export const JOB_OUTREACH_HEADERS = [
   "Name",
@@ -24,6 +25,7 @@ export const JOB_OUTREACH_HEADERS = [
   "Contacted On",
   "Notes",
   "Date Added",
+  "Draft Created",
 ] as const;
 
 export const OUTREACH_STATUSES = [
@@ -130,12 +132,13 @@ export interface OutreachRow {
   opportunityId: string;
   status: string;
   contactedOn: unknown;
+  draftCreated: string;
 }
 
 const text = (value: unknown): string =>
   typeof value === "string" || typeof value === "number" ? String(value) : "";
 
-/** Row positions follow JOB_OUTREACH_HEADERS (A2:K). */
+/** Row positions follow JOB_OUTREACH_HEADERS (A2:L). */
 export const outreachRows = (
   rows: readonly (readonly unknown[])[],
 ): OutreachRow[] =>
@@ -154,6 +157,7 @@ export const outreachRows = (
         opportunityId: text(row[5]).trim(),
         status: text(row[7]).trim(),
         contactedOn: row[8],
+        draftCreated: text(row[11]).trim(),
       },
     ];
   });
@@ -335,6 +339,27 @@ export function buildOutreachPlan(
   };
 }
 
+/** Contacted On holds a calendar date, so "today" is the local date. */
+export const localDay = (now: Date): string =>
+  [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+  ].join("-");
+
+/** Reads an optional `--cap=<n>` command-line argument. */
+export function outreachCapArgument(argv: readonly string[]): number {
+  const argument = argv
+    .find((value) => value.startsWith("--cap="))
+    ?.slice("--cap=".length);
+  const cap =
+    argument === undefined ? DEFAULT_OUTREACH_DAILY_CAP : Number(argument);
+  if (!Number.isInteger(cap) || cap < 0) {
+    throw new Error("--cap must be a whole number, 0 or more");
+  }
+  return cap;
+}
+
 export function formatOutreachPlan(plan: OutreachPlan): string {
   const lines = [
     `Outreach: ${String(plan.sentToday)} sent today, daily cap ${String(plan.cap)}, ${String(plan.batch.length)} in today's batch, ${String(plan.deferred)} left for another day.`,
@@ -344,7 +369,7 @@ export function formatOutreachPlan(plan: OutreachPlan): string {
       ? ["- Nothing to send."]
       : plan.batch.map(
           ({ row, role }) =>
-            `- Row ${String(row.rowNumber)} | ${row.name}${row.title === "" ? "" : ` (${row.title})`} | ${row.email} | ${row.company} - ${role.role} | fit ${String(role.fit)} (${role.verdict})`,
+            `- Row ${String(row.rowNumber)} | ${row.name}${row.title === "" ? "" : ` (${row.title})`} | ${row.email} | ${row.company} - ${role.role} | fit ${String(role.fit)} (${role.verdict})${row.draftCreated === "" ? "" : " | draft ready"}`,
         )),
   ];
   if (plan.held.length > 0) {
@@ -359,3 +384,82 @@ export function formatOutreachPlan(plan: OutreachPlan): string {
   }
   return lines.join("\n");
 }
+
+/**
+ * One Gmail draft for a human to review and send. Scout only writes these to a
+ * local file; whoever creates the draft must never send it.
+ */
+export interface OutreachDraft {
+  rowNumber: number;
+  to: string;
+  name: string;
+  company: string;
+  opportunityId: string;
+  role: string;
+  subject: string;
+  body: string;
+}
+
+export interface OutreachDrafts {
+  drafts: readonly OutreachDraft[];
+  /** Batch contacts that already have a draft. */
+  alreadyDrafted: number;
+  /** Batch contacts whose role has no outreach draft in Application Kit. */
+  missing: readonly PlannedContact[];
+}
+
+/**
+ * Turns today's batch into draft emails, using the outreach draft written for
+ * each contact's role during review with the contact's name filled in.
+ * `kitRows` are Application Kit rows (A2:H).
+ */
+export function buildOutreachDrafts(
+  plan: OutreachPlan,
+  kitRows: readonly (readonly unknown[])[],
+): OutreachDrafts {
+  const kit = new Map(
+    kitRows.map((row) => [text(row[0]).trim(), text(row[7]).trim()] as const),
+  );
+  const drafts: OutreachDraft[] = [];
+  const missing: PlannedContact[] = [];
+  let alreadyDrafted = 0;
+  for (const contact of plan.batch) {
+    const { row, role } = contact;
+    if (row.draftCreated !== "") {
+      alreadyDrafted += 1;
+      continue;
+    }
+    const template = kit.get(role.id) ?? "";
+    if (template === "") {
+      missing.push(contact);
+      continue;
+    }
+    drafts.push({
+      rowNumber: row.rowNumber,
+      to: normalizeEmail(row.email) ?? row.email,
+      name: row.name,
+      company: row.company,
+      opportunityId: role.id,
+      role: role.role,
+      subject: `${role.role} role at ${role.company}`,
+      body: template.replaceAll(/\[name\]/giu, row.name),
+    });
+  }
+  return { drafts, alreadyDrafted, missing };
+}
+
+/** What the draft creator reports back: one entry per Gmail draft it made. */
+export const createdOutreachDraftsSchema = z
+  .array(
+    z
+      .object({
+        rowNumber: z.number().int().min(2),
+        to: z.string().trim().toLowerCase().email(),
+      })
+      .strict(),
+  )
+  .min(1);
+
+export type CreatedOutreachDraft = z.infer<
+  typeof createdOutreachDraftsSchema
+>[number];
