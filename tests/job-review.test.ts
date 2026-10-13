@@ -217,7 +217,7 @@ describe("private search repository", () => {
     const root = mkdtempSync(join(tmpdir(), "scout-search-"));
     const remote = join(root, "remote.git");
     const work = join(root, "my-search");
-    run(root, ["init", "-q", "--bare", remote]);
+    run(root, ["init", "-q", "--bare", "-b", "main", remote]);
     run(root, ["init", "-q", "-b", "main", work]);
     run(work, ["config", "user.email", "test@example.test"]);
     run(work, ["config", "user.name", "Test"]);
@@ -230,9 +230,9 @@ describe("private search repository", () => {
     const first = syncSearchRepo(work);
     expect(first).toMatchObject({ committed: true, pushed: true });
     expect(first.state).toMatchObject({ dirty: false, ahead: 0 });
-    expect(run(remote, ["log", "--oneline"]).trim().split("\n")).toHaveLength(
-      1,
-    );
+    expect(
+      run(remote, ["log", "--oneline", "main"]).trim().split("\n"),
+    ).toHaveLength(1);
     expect(syncSearchRepo(work)).toMatchObject({
       committed: false,
       pushed: false,
