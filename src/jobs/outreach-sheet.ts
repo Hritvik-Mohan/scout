@@ -14,7 +14,7 @@ import { JobReviewSheetRepository } from "./review-sheet.js";
 import { pipelineEntries } from "./review.js";
 
 interface SheetMetadata {
-  sheets?: { properties?: { title?: string } }[];
+  sheets?: { properties?: { sheetId?: number; title?: string } }[];
 }
 
 interface AddSheetResponse {
@@ -26,15 +26,18 @@ const STATUS_COLUMN = JOB_OUTREACH_HEADERS.indexOf("Status");
 export class JobOutreachSheetRepository {
   constructor(private readonly transport: GoogleSheetsWorkbookTransport) {}
 
-  /** Creates the Outreach tab on first use and keeps its header row current. */
+  /**
+   * Creates the Outreach tab on first use and keeps its header row and Status
+   * list current, so an older tab picks up new columns and statuses.
+   */
   async ensureSheet(): Promise<void> {
     const metadata = await this.transport.getSpreadsheet<SheetMetadata>(
-      "sheets(properties(title))",
+      "sheets(properties(sheetId,title))",
     );
-    const exists = (metadata.sheets ?? []).some(
+    let sheetId = (metadata.sheets ?? []).find(
       (sheet) => sheet.properties?.title === JOB_OUTREACH_SHEET,
-    );
-    if (!exists) {
+    )?.properties?.sheetId;
+    if (sheetId === undefined) {
       const created =
         await this.transport.batchUpdateSpreadsheet<AddSheetResponse>([
           {
@@ -46,32 +49,32 @@ export class JobOutreachSheetRepository {
             },
           },
         ]);
-      const sheetId = created.replies?.[0]?.addSheet?.properties?.sheetId;
-      if (sheetId !== undefined) {
-        await this.transport.batchUpdateSpreadsheet([
-          {
-            setDataValidation: {
-              range: {
-                sheetId,
-                startRowIndex: 1,
-                endRowIndex: 1000,
-                startColumnIndex: STATUS_COLUMN,
-                endColumnIndex: STATUS_COLUMN + 1,
+      sheetId = created.replies?.[0]?.addSheet?.properties?.sheetId;
+    }
+    if (sheetId !== undefined) {
+      await this.transport.batchUpdateSpreadsheet([
+        {
+          setDataValidation: {
+            range: {
+              sheetId,
+              startRowIndex: 1,
+              endRowIndex: 1000,
+              startColumnIndex: STATUS_COLUMN,
+              endColumnIndex: STATUS_COLUMN + 1,
+            },
+            rule: {
+              condition: {
+                type: "ONE_OF_LIST",
+                values: OUTREACH_STATUSES.map((userEnteredValue) => ({
+                  userEnteredValue,
+                })),
               },
-              rule: {
-                condition: {
-                  type: "ONE_OF_LIST",
-                  values: OUTREACH_STATUSES.map((userEnteredValue) => ({
-                    userEnteredValue,
-                  })),
-                },
-                strict: true,
-                showCustomUi: true,
-              },
+              strict: true,
+              showCustomUi: true,
             },
           },
-        ]);
-      }
+        },
+      ]);
     }
     await this.transport.batchUpdateValues([
       {
@@ -83,6 +86,11 @@ export class JobOutreachSheetRepository {
 
   rows(): Promise<readonly (readonly unknown[])[]> {
     return this.transport.getValues(`'${JOB_OUTREACH_SHEET}'!A2:L1000`);
+  }
+
+  /** Outreach rows for read-only reports, or none when the tab is missing. */
+  rowsIfPresent(): Promise<readonly (readonly unknown[])[]> {
+    return this.rows().catch(() => []);
   }
 
   async appendContacts(rows: readonly (readonly string[])[]): Promise<void> {

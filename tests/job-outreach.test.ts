@@ -4,6 +4,7 @@ import type { GoogleSheetsWorkbookTransport } from "../src/integrations/google-s
 import { JobOutreachSheetRepository } from "../src/jobs/outreach-sheet.js";
 import {
   buildOutreachDrafts,
+  buildOutreachFollowUps,
   buildOutreachPlan,
   createdOutreachDraftsSchema,
   formatOutreachPlan,
@@ -305,7 +306,67 @@ describe("outreach drafts", () => {
   });
 });
 
+describe("outreach follow-ups", () => {
+  it("lists sent contacts with no reply after five working days", () => {
+    const sent = (
+      name: string,
+      contactedOn: unknown,
+      status = "Sent",
+    ): unknown[] =>
+      sheetRow(name, "Acme", `${name.toLowerCase()}@acme.example`, {
+        status,
+        contactedOn,
+      });
+    // 2026-10-13 is a Tuesday; five working days before it is 2026-10-06.
+    const output = buildOutreachFollowUps(
+      [
+        sent("Due", "2026-10-06"),
+        sent("Early", "2026-10-07"),
+        // 46295 is the Sheets serial number for 2026-09-30.
+        sent("Oldest", 46295),
+        sent("Replied", "2026-09-01", "Replied"),
+        sent("Chased", "2026-09-01", "Followed up"),
+        sent("Undated", ""),
+        sheetRow("Queued", "Acme", "queued@acme.example"),
+      ],
+      { today: "2026-10-13" },
+    );
+    expect(output.split("\n")).toEqual([
+      "Follow up with contacts (emailed 5+ working days ago, no reply recorded):",
+      "- Outreach row 4 | emailed 2026-09-30 | Oldest | oldest@acme.example | Acme",
+      "- Outreach row 2 | emailed 2026-10-06 | Due | due@acme.example | Acme",
+      "1 sent contact(s) have no Contacted On date, so no follow-up can be timed.",
+    ]);
+    expect(
+      buildOutreachFollowUps([sent("Early", "2026-10-07")], {
+        today: "2026-10-13",
+      }),
+    ).toBe("");
+  });
+});
+
 describe("outreach sheet", () => {
+  it("refreshes the status list on an existing tab", async () => {
+    const requests: unknown[] = [];
+    const transport: GoogleSheetsWorkbookTransport = {
+      getValues: () => Promise.resolve([]),
+      batchUpdateValues: () => Promise.resolve(),
+      appendValues: () => Promise.resolve(),
+      getSpreadsheet: <T>() =>
+        Promise.resolve({
+          sheets: [{ properties: { sheetId: 42, title: "Outreach" } }],
+        } as T),
+      batchUpdateSpreadsheet: <T>(batch: readonly unknown[]) => {
+        requests.push(...batch);
+        return Promise.resolve({} as T);
+      },
+    };
+    await new JobOutreachSheetRepository(transport).ensureSheet();
+    expect(requests).toHaveLength(1);
+    expect(JSON.stringify(requests[0])).toContain('"sheetId":42');
+    expect(JSON.stringify(requests[0])).toContain("Followed up");
+  });
+
   it("stamps Draft Created only where the address still matches", async () => {
     const writes: { range: string; values: readonly (readonly unknown[])[] }[] =
       [];
