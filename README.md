@@ -718,3 +718,8 @@ For a major release, edit the notes to list exactly what users must change.
   `.local/` are ignored by default.
 - Your ICP and profile are personal. They stay in `my-search/`, which Git
   ignores; do not commit them to a public repository.
+
+## License
+
+[MIT](LICENSE). You may use, change, and share Scout freely; keep the copyright
+notice. It comes with no warranty.
