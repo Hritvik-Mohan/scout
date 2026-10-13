@@ -23,6 +23,7 @@
     "jobs:review:pending": "npm run build && node --env-file-if-exists=.env dist/commands/list-pending-job-reviews.js",
     "jobs:review:apply": "npm run build && node --env-file-if-exists=.env dist/commands/apply-job-reviews.js",
     "jobs:search:sync": "npm run build && node dist/commands/sync-search.js",
+    "jobs:monitor": "npm run build && node --env-file-if-exists=.env dist/commands/monitor-job-runs.js",
     "jobs:digest": "npm run build && node --env-file-if-exists=.env dist/commands/job-digest.js",
     "jobs:outcomes": "npm run build && node --env-file-if-exists=.env dist/commands/job-outcomes.js",
     "jobs:sources:discover": "npm run build && node --env-file-if-exists=.env dist/commands/discover-job-sources.js",

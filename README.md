@@ -433,6 +433,7 @@ Update the ICP whenever your resume changes, then re-run the review with
 | `npm run jobs:review:apply -- <reviews.json>` | Write reviews and drafts to the sheet                           |
 | `npm run jobs:digest`                         | Print what to apply to next, follow-ups due, and outcomes       |
 | `npm run jobs:outcomes`                       | Print responses and interviews by verdict, level, and source    |
+| `npm run jobs:monitor`                        | Check run health and open GitHub issues for problems            |
 | `npm run jobs:sources:discover`               | Probe employers in the Companies tab for job boards             |
 | `npm run jobs:config:check`                   | Validate the three files in `my-search/`                        |
 | `npm run jobs:search:sync`                    | Commit and push `my-search/` to your private repository         |
@@ -514,10 +515,12 @@ needs:
 | Claude desktop scheduled task | The app open on a computer that has this folder and its `.env`    |
 | Claude cloud routine          | GitHub connected to Claude, your private search repo, two secrets |
 
-Scout needs no GitHub repository secrets. The included CI workflow only runs
-`npm run check`, which never touches the sheet. The two secrets for a cloud
-routine are environment variables in Claude's cloud environment, not GitHub
-Actions secrets; do not add the key to GitHub.
+Scout itself needs no GitHub repository secrets. (The optional
+[run monitor](#get-an-issue-when-a-run-goes-wrong) uses two, in your private
+search repository.) The included CI workflow only runs `npm run check`, which
+never touches the sheet. The two secrets for a cloud routine are environment
+variables in Claude's cloud environment, not GitHub Actions secrets; do not add
+the key to GitHub.
 
 ### On your computer
 
@@ -599,6 +602,48 @@ changes."; the counts from step 1 and how many roles were reviewed; the digest's
 "Apply next" list with row numbers, fit, verdict, flags and links; any
 follow-ups due; and the outcome summary.
 ```
+
+## Get an issue when a run goes wrong
+
+A scheduled refresh can fail without telling you: a usage limit, an expired key,
+or a job board that changed its feed. `npm run jobs:monitor` reads the Runs and
+Sources tabs and reports three things:
+
+| It reports                 | When                                                          |
+| -------------------------- | ------------------------------------------------------------- |
+| The refresh is not running | No run has been recorded for 16 hours                         |
+| A run failed               | The latest run reached none of its sources                    |
+| A source is failing        | An active source has not been checked successfully for 2 days |
+
+A single timeout is not reported; feeds blip. With `SCOUT_ISSUE_REPO`
+(`owner/name`) and `GITHUB_TOKEN` set, it opens one GitHub issue per problem,
+does not repeat an issue that is already open, and closes it when the problem
+clears. Without them it prints the findings and exits with an error.
+
+### Run it from your private repository
+
+The monitor is most useful running somewhere other than the refresh itself, so
+it can notice when the refresh never started. GitHub Actions in your private
+search repository does that, and keeps the issues private:
+
+1. Copy
+   [`examples/workflows/scout-monitor.yml`](examples/workflows/scout-monitor.yml)
+   to `.github/workflows/scout-monitor.yml` in your private search repository,
+   then commit and push.
+2. Add two secrets to that repository, from the Scout folder. Neither command
+   displays the value:
+
+   ```bash
+   grep '^SCOUT_JOB_SHEET_ID=' .env | cut -d= -f2- | tr -d '\n' | gh secret set SCOUT_JOB_SHEET_ID --repo <you>/scout-search
+   gh secret set GOOGLE_SERVICE_ACCOUNT_JSON --repo <you>/scout-search < ~/.config/scout/service-account.json
+   ```
+
+3. Start it once from the repository's **Actions** tab to confirm it works.
+
+Keep these secrets in your private repository only. Do not add them to a public
+fork of Scout. The workflow's own token files the issues; you do not need to
+create one. Adjust the windows with `SCOUT_MONITOR_MAX_SILENCE_HOURS` and
+`SCOUT_MONITOR_SOURCE_STALE_HOURS`.
 
 ## How it works
 

@@ -1,0 +1,44 @@
+# Scout run monitor
+#
+# Copy this file to .github/workflows/scout-monitor.yml in your PRIVATE search
+# repository (the one cloned into my-search/). It checks your sheet twice a day
+# and opens an issue in that repository when the refresh has stopped, a run
+# failed, or a source has been failing for two days. Issues close themselves
+# when the problem clears.
+#
+# It needs two repository secrets, the same values the cloud routine uses:
+#   SCOUT_JOB_SHEET_ID
+#   GOOGLE_SERVICE_ACCOUNT_JSON   (the key file's contents, raw or base64)
+
+name: Scout monitor
+
+on:
+  schedule:
+    # 10:30 and 19:30 Asia/Kolkata; set this shortly after your refresh times.
+    - cron: "0 5,14 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The Scout code. Point this at your fork if you have changed it.
+          repository: Hritvik-Mohan/scout
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run jobs:monitor
+        env:
+          SCOUT_JOB_SHEET_ID: ${{ secrets.SCOUT_JOB_SHEET_ID }}
+          GOOGLE_SERVICE_ACCOUNT_JSON:
+            ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          GITHUB_TOKEN: ${{ github.token }}
+          SCOUT_ISSUE_REPO: ${{ github.repository }}
