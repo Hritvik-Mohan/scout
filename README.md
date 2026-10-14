@@ -49,10 +49,13 @@ flowchart LR
     search["my-search/ (private repo)<br/>ICP, matching terms,<br/>scoring profile"]
     sched["Scheduler<br/>desktop task or<br/>cloud routine"]
     update["jobs:update<br/>poll, filter, score, flag,<br/>remove closed postings"]
-    sheet[("Your Google Sheet<br/>Job Pipeline, Application Kit,<br/>Sources, Runs, Companies")]
+    sheet[("Your Google Sheet<br/>Job Pipeline, Application Kit,<br/>Outreach, Sources, Runs,<br/>Companies")]
     review["Claude Code review<br/>reads each new posting<br/>against your ICP"]
     digest["jobs:digest<br/>apply next, follow-ups,<br/>outcomes"]
-    you(["You<br/>apply and record status"])
+    import["jobs:outreach:import<br/>checks contacts, links<br/>them to reviewed roles"]
+    plan["jobs:outreach:plan<br/>today's batch: 20 a day,<br/>4 per company"]
+    drafts["Claude with Gmail<br/>creates drafts,<br/>never sends"]
+    you(["You<br/>apply, send, and<br/>record status"])
 
     boards -- "open roles" --> update
     search -- "titles, stack, locations" --> update
@@ -62,13 +65,22 @@ flowchart LR
     search -- "resume facts" --> review
     review -- "fit, verdict, drafts,<br/>referral path" --> sheet
     sheet --> digest
-    digest -- "ranked list" --> you
-    you -- "Applied, Stage, Notes" --> sheet
+    digest -- "ranked list,<br/>follow-ups due" --> you
+    you -- "recruiters you found,<br/>with public sources" --> import
+    import -- "queued contacts" --> sheet
+    sheet -- "contacts and<br/>reviewed roles" --> plan
+    sched -. "twice a day" .-> plan
+    plan -- "today's batch" --> drafts
+    drafts -- "Gmail drafts" --> you
+    drafts -- "Draft Created" --> sheet
+    you -- "Applied, Stage, Notes,<br/>outreach Status" --> sheet
 ```
 
-Scout reaches the sheet with a Google service-account key. Claude does the one
-step code cannot: reading a posting against your real experience. Nothing in the
-loop applies, sends a message, or contacts anyone.
+Scout reaches the sheet with a Google service-account key. Claude does the two
+steps code cannot: reading a posting against your real experience, and putting
+the day's outreach emails in your Gmail as drafts through its Gmail connector.
+Nothing in the loop applies, sends a message, or contacts anyone; you send every
+email yourself.
 
 ## Quick start
 
