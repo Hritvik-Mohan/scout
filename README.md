@@ -629,6 +629,10 @@ needs:
 | Claude desktop scheduled task | The app open on a computer that has this folder and its `.env`    |
 | Claude cloud routine          | GitHub connected to Claude, your private search repo, two secrets |
 
+To have a scheduled run also put the day's outreach emails in Gmail as drafts,
+the desktop task needs a Gmail connector in Claude. A cloud routine runs with no
+connectors, so it reports the outreach batch and leaves the drafts to you.
+
 Scout itself needs no GitHub repository secrets. (The optional
 [run monitor](#get-an-issue-when-a-run-goes-wrong) uses two, in your private
 search repository.) The included CI workflow only runs `npm run check`, which
@@ -702,9 +706,19 @@ Steps:
    .local/job-reviews/reviews.json, and run
    `npm run jobs:review:apply -- .local/job-reviews/reviews.json`.
 4. Run `npm run jobs:digest`.
+5. Run `npm run jobs:outreach:plan` and keep its output.
+6. Only if a Gmail connector is available in this session, create today's
+   outreach drafts following "Gmail drafts" in README.md: run
+   `npm run jobs:outreach:drafts`, create one Gmail draft per entry in
+   .local/outreach/drafts.json with exactly its `to`, `subject` and `body`,
+   write .local/outreach/created.json for the drafts that were created, and run
+   `npm run jobs:outreach:drafts:record -- .local/outreach/created.json`. If
+   recording fails after drafts were created, stop and list those drafts so
+   they are not created twice. Without a Gmail connector, skip this step.
 
 Rules:
 - Never submit applications, contact anyone, or send messages.
+- In Gmail, create drafts only. Never send, schedule, or reply to anything.
 - Never invent experience, metrics, skills, names, or contact details.
 - Never write to Job Pipeline columns R:V.
 - Do not modify source files, commit, or push. Describe needed changes instead.
@@ -714,7 +728,9 @@ Rules:
 Finish with one compact report: the reason this run matters or "No actionable
 changes."; the counts from step 1 and how many roles were reviewed; the digest's
 "Apply next" list with row numbers, fit, verdict, flags and links; any
-follow-ups due; and the outcome summary.
+follow-ups due, for applications and for outreach contacts; today's outreach
+batch, and how many Gmail drafts were created or why none were; and the outcome
+summary.
 ```
 
 ## Get an issue when a run goes wrong
