@@ -40,6 +40,7 @@ export const OUTREACH_STATUSES = [
 ] as const;
 
 export const DEFAULT_OUTREACH_DAILY_CAP = 20;
+export const DEFAULT_OUTREACH_PER_COMPANY_CAP = 4;
 export const OUTREACH_FOLLOW_UP_BUSINESS_DAYS = 5;
 
 const CLOSED_STAGES = new Set(["Withdrawn", "Rejected", "Closed"]);
@@ -272,9 +273,10 @@ export interface PlannedContact {
 
 export interface OutreachPlan {
   cap: number;
+  perCompany: number;
   sentToday: number;
   batch: readonly PlannedContact[];
-  /** Eligible contacts left for another day by the cap. */
+  /** Eligible contacts left for another day by either cap. */
   deferred: number;
   held: readonly { row: OutreachRow; reason: string }[];
 }
@@ -288,20 +290,27 @@ const sheetDay = (value: unknown): string | null => {
 
 /**
  * Picks today's batch from queued contacts. Only contacts tied to a role that
- * passed review are eligible, and the batch never exceeds the daily cap less
- * what was already sent today.
+ * passed review are eligible. The batch never exceeds the daily cap, nor the
+ * per-company cap, each less what was already sent today.
  */
 export function buildOutreachPlan(
   sheetRows: readonly (readonly unknown[])[],
   entries: readonly PipelineEntry[],
-  options: { today: string; cap?: number },
+  options: { today: string; cap?: number; perCompany?: number },
 ): OutreachPlan {
   const cap = options.cap ?? DEFAULT_OUTREACH_DAILY_CAP;
+  const perCompany = options.perCompany ?? DEFAULT_OUTREACH_PER_COMPANY_CAP;
   const rows = outreachRows(sheetRows);
   const blocked = doNotContactEntries(rows);
-  const sentToday = rows.filter(
+  const sent = rows.filter(
     (row) => sheetDay(row.contactedOn) === options.today,
-  ).length;
+  );
+  const sentToday = sent.length;
+  const companyCounts = new Map<string, number>();
+  for (const row of sent) {
+    const company = normalizeCompanyName(row.company);
+    companyCounts.set(company, (companyCounts.get(company) ?? 0) + 1);
+  }
   const handled = new Map<string, number>();
   for (const row of rows) {
     const email = normalizeEmail(row.email);
@@ -340,9 +349,18 @@ export function buildOutreachPlan(
       left.row.rowNumber - right.row.rowNumber,
   );
   const { remaining } = checkDailyCap(Math.min(sentToday, cap), cap);
-  const batch = eligible.slice(0, remaining);
+  const batch: PlannedContact[] = [];
+  for (const contact of eligible) {
+    if (batch.length >= remaining) break;
+    const company = normalizeCompanyName(contact.row.company);
+    const count = companyCounts.get(company) ?? 0;
+    if (count >= perCompany) continue;
+    companyCounts.set(company, count + 1);
+    batch.push(contact);
+  }
   return {
     cap,
+    perCompany,
     sentToday,
     batch,
     deferred: eligible.length - batch.length,
@@ -358,22 +376,30 @@ export const localDay = (now: Date): string =>
     String(now.getDate()).padStart(2, "0"),
   ].join("-");
 
-/** Reads an optional `--cap=<n>` command-line argument. */
-export function outreachCapArgument(argv: readonly string[]): number {
-  const argument = argv
-    .find((value) => value.startsWith("--cap="))
-    ?.slice("--cap=".length);
-  const cap =
-    argument === undefined ? DEFAULT_OUTREACH_DAILY_CAP : Number(argument);
-  if (!Number.isInteger(cap) || cap < 0) {
-    throw new Error("--cap must be a whole number, 0 or more");
-  }
-  return cap;
+/** Reads the optional `--cap=<n>` and `--per-company=<n>` arguments. */
+export function outreachLimitArguments(argv: readonly string[]): {
+  cap: number;
+  perCompany: number;
+} {
+  const limit = (flag: string, fallback: number): number => {
+    const argument = argv
+      .find((value) => value.startsWith(`${flag}=`))
+      ?.slice(flag.length + 1);
+    const value = argument === undefined ? fallback : Number(argument);
+    if (!Number.isInteger(value) || value < 0) {
+      throw new Error(`${flag} must be a whole number, 0 or more`);
+    }
+    return value;
+  };
+  return {
+    cap: limit("--cap", DEFAULT_OUTREACH_DAILY_CAP),
+    perCompany: limit("--per-company", DEFAULT_OUTREACH_PER_COMPANY_CAP),
+  };
 }
 
 export function formatOutreachPlan(plan: OutreachPlan): string {
   const lines = [
-    `Outreach: ${String(plan.sentToday)} sent today, daily cap ${String(plan.cap)}, ${String(plan.batch.length)} in today's batch, ${String(plan.deferred)} left for another day.`,
+    `Outreach: ${String(plan.sentToday)} sent today, daily cap ${String(plan.cap)} (${String(plan.perCompany)} per company), ${String(plan.batch.length)} in today's batch, ${String(plan.deferred)} left for another day.`,
     "",
     "Today's batch (ranked by the fit of the linked role; Scout sends nothing):",
     ...(plan.batch.length === 0

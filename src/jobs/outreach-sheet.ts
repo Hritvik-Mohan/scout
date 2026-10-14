@@ -133,7 +133,7 @@ export class JobOutreachSheetRepository {
 /** Reads the Outreach tab and Job Pipeline and builds today's batch. */
 export async function loadOutreachPlan(
   transport: GoogleSheetsWorkbookTransport,
-  options: { now: Date; cap: number },
+  options: { now: Date; cap: number; perCompany: number },
 ): Promise<OutreachPlan> {
   const outreach = new JobOutreachSheetRepository(transport);
   await outreach.ensureSheet();
@@ -143,6 +143,10 @@ export async function loadOutreachPlan(
       await new JobReviewSheetRepository(transport).pipelineRows(),
       options.now,
     ),
-    { today: localDay(options.now), cap: options.cap },
+    {
+      today: localDay(options.now),
+      cap: options.cap,
+      perCompany: options.perCompany,
+    },
   );
 }

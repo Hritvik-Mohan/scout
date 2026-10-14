@@ -512,9 +512,12 @@ when:
 
 - its **Status** is `Queued` or blank,
 - its company has an open role you reviewed with a verdict other than `skip`
-  (set `opportunity_id` to pin a particular role), and
+  (set `opportunity_id` to pin a particular role),
 - the day's cap has room. The cap is 20, less the rows whose **Contacted On** is
-  today; pass `-- --cap=<n>` to change it.
+  today; pass `-- --cap=<n>` to change it, and
+- its company's cap has room. No more than 4 contacts at one company go out in a
+  day, again counting those already contacted today; pass `-- --per-company=<n>`
+  to change it. The rest wait for another day.
 
 Contacts are ranked by the fit of the linked role, and everything left out is
 listed under "Held back" with the reason. After you send an email yourself, set
